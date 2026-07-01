@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Amoeba Cam — ターコイズの油膜フィルター</title>
+<style>
+  :root{
+    --bg: #0b0d12;
+    --panel: rgba(14,16,22,0.72);
+    --line: rgba(255,255,255,0.10);
+    --text: #eef0f5;
+    --sub: #9aa1b2;
+    --accent1: #17E3C4;
+    --accent2: #0FB8D9;
+    --accent3: #2FD8A0;
+    --accent4: #14C8E8;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color: transparent;}
+  html,body{
+    margin:0; padding:0; height:100%; background:var(--bg); color:var(--text);
+    font-family: -apple-system, "SF Pro Text", "Hiragino Sans", "Noto Sans JP", system-ui, sans-serif;
+    overflow:hidden; overscroll-behavior:none;
+  }
+  #stage{
+    position:fixed; inset:0; display:flex; align-items:center; justify-content:center;
+    background:#000;
+  }
+  video{ display:none; }
+  canvas#live{
+    width:100%; height:100%; object-fit:cover; display:block;
+  }
+
+  #top{
+    position:fixed; top:0; left:0; right:0; z-index:5;
+    display:flex; align-items:center; justify-content:space-between;
+    padding: calc(env(safe-area-inset-top,0px) + 14px) 18px 10px;
+    background: linear-gradient(180deg, rgba(0,0,0,0.55), transparent);
+    pointer-events:none;
+  }
+  #brand{
+    font-size:15px; font-weight:700; letter-spacing:0.02em;
+    display:flex; align-items:center; gap:8px;
+  }
+  #brand .dot{
+    width:9px; height:9px; border-radius:50%;
+    background: conic-gradient(from 0deg, var(--accent1), var(--accent2), var(--accent3), var(--accent4), var(--accent1));
+    box-shadow: 0 0 10px rgba(255,255,255,0.5);
+  }
+  #status{
+    font-size:11px; color:var(--sub); pointer-events:auto;
+  }
+
+  #permWrap{
+    position:fixed; inset:0; z-index:20; display:flex; align-items:center; justify-content:center;
+    background: radial-gradient(120% 120% at 50% 0%, #171a24 0%, #0b0d12 60%);
+    padding:24px;
+  }
+  #permCard{
+    max-width:340px; text-align:center;
+  }
+  #permCard .blobPreview{
+    width:96px; height:96px; margin:0 auto 22px; border-radius:50%;
+    background: conic-gradient(from 90deg, var(--accent1), var(--accent2), var(--accent3), var(--accent4), var(--accent1));
+    filter: blur(0.5px);
+    animation: pulse 3.2s ease-in-out infinite;
+  }
+  @keyframes pulse{
+    0%,100%{ transform: scale(1) rotate(0deg); border-radius:50% 45% 55% 48%;}
+    33%{ transform: scale(1.08) rotate(8deg); border-radius:42% 58% 45% 55%;}
+    66%{ transform: scale(0.94) rotate(-6deg); border-radius:55% 45% 60% 40%;}
+  }
+  #permCard h1{ font-size:20px; margin:0 0 10px; font-weight:700; }
+  #permCard p{ font-size:13.5px; line-height:1.7; color:var(--sub); margin:0 0 26px; }
+  .btn{
+    appearance:none; border:none; cursor:pointer; font-family:inherit;
+  }
+  #startBtn{
+    width:100%; padding:15px 20px; border-radius:14px; font-size:15px; font-weight:700;
+    color:#0b0d12; background: linear-gradient(120deg, var(--accent1), var(--accent3));
+  }
+  #errMsg{ margin-top:14px; font-size:12px; color:#ff9d9d; min-height:16px; }
+
+  #bottom{
+    position:fixed; left:0; right:0; bottom:0; z-index:5;
+    padding: 14px 18px calc(env(safe-area-inset-bottom,0px) + 18px);
+    background: linear-gradient(0deg, rgba(0,0,0,0.65), transparent);
+  }
+  .panel{
+    background:var(--panel); border:1px solid var(--line); border-radius:18px;
+    padding:14px 16px; backdrop-filter: blur(14px);
+    margin-bottom:12px;
+  }
+  .sliderRow{ display:flex; align-items:center; gap:12px; padding:6px 0; }
+  .sliderRow label{ font-size:11.5px; color:var(--sub); width:78px; flex-shrink:0; }
+  .sliderRow input[type=range]{
+    flex:1; -webkit-appearance:none; height:4px; border-radius:2px;
+    background: linear-gradient(90deg, var(--accent1), var(--accent2), var(--accent3));
+    outline:none;
+  }
+  .sliderRow input[type=range]::-webkit-slider-thumb{
+    -webkit-appearance:none; width:18px; height:18px; border-radius:50%;
+    background:#fff; box-shadow:0 1px 4px rgba(0,0,0,0.4); border:2px solid #0b0d12;
+  }
+
+  #controls{
+    display:grid; grid-template-columns: 56px 1fr 56px; align-items:center; gap:14px;
+  }
+  #flipBtn, #settingsBtn{
+    width:52px; height:52px; border-radius:50%; background:rgba(255,255,255,0.08);
+    border:1px solid var(--line); color:var(--text); font-size:20px;
+    display:flex; align-items:center; justify-content:center;
+  }
+  #shutterOuter{
+    width:74px; height:74px; border-radius:50%; margin:0 auto;
+    border:3px solid rgba(255,255,255,0.85);
+    display:flex; align-items:center; justify-content:center;
+    background:transparent;
+  }
+  #shutterInner{
+    width:60px; height:60px; border-radius:50%;
+    background: conic-gradient(from 0deg, var(--accent1), var(--accent2), var(--accent3), var(--accent4), var(--accent1));
+    transition: transform 0.12s ease;
+  }
+  #shutterOuter:active #shutterInner{ transform: scale(0.85); }
+
+  #settingsPanel.hidden, #hintPanel.hidden{ display:none; }
+
+  #hintPanel p{ margin:0; font-size:11.5px; color:var(--sub); line-height:1.6; }
+
+  /* Preview / result overlay */
+  #previewWrap{
+    position:fixed; inset:0; z-index:15; background:#000; display:none;
+    flex-direction:column;
+  }
+  #previewWrap.show{ display:flex; }
+  #previewImg{ flex:1; width:100%; object-fit:contain; background:#000; }
+  #previewBar{
+    display:flex; gap:12px; padding: 16px 20px calc(env(safe-area-inset-bottom,0px) + 20px);
+    background: rgba(10,11,15,0.95);
+  }
+  #previewBar button{
+    flex:1; padding:14px; border-radius:14px; font-size:14.5px; font-weight:700;
+  }
+  #retakeBtn{ background:rgba(255,255,255,0.08); color:var(--text); border:1px solid var(--line); }
+  #saveBtn{ background: linear-gradient(120deg, var(--accent4), var(--accent2)); color:#1a1200; }
+</style>
+</head>
+<body>
+
+<div id="stage">
+  <video id="video" playsinline muted autoplay></video>
+  <canvas id="live"></canvas>
+</div>
+
+<div id="top">
+  <div id="brand"><span class="dot"></span>Amoeba Cam</div>
+  <div id="status">背景をターコイズの油膜でやさしく隠す</div>
+</div>
+
+<div id="permWrap">
+  <div id="permCard">
+    <div class="blobPreview"></div>
+    <h1>Amoeba Cam</h1>
+    <p>撮影前に、画面の上を青緑の小さな粒がオイルライトのように漂い、近づけばくっついて伸び、離れれば分裂しながら、背景に映り込む人やものをさりげなく隠します。カメラへのアクセスを許可してください。</p>
+    <button class="btn" id="startBtn">カメラを起動する</button>
+    <div id="errMsg"></div>
+  </div>
+</div>
+
+<div id="bottom">
+  <div class="panel" id="settingsPanel">
+    <div class="sliderRow">
+      <label>数 / 量</label>
+      <input type="range" id="countSlider" min="14" max="44" step="1" value="28">
+    </div>
+    <div class="sliderRow">
+      <label>粒の大きさ</label>
+      <input type="range" id="sizeSlider" min="4" max="14" step="1" value="8">
+    </div>
+    <div class="sliderRow">
+      <label>動きの速さ</label>
+      <input type="range" id="speedSlider" min="1" max="10" step="1" value="6">
+    </div>
+    <div class="sliderRow">
+      <label>色の揺れ</label>
+      <input type="range" id="hueSlider" min="2" max="30" step="1" value="10">
+    </div>
+  </div>
+
+  <div id="controls">
+    <button class="btn" id="flipBtn">⟲</button>
+    <div id="shutterOuter"><div id="shutterInner"></div></div>
+    <button class="btn" id="settingsBtn">✦</button>
+  </div>
+</div>
+
+<div id="previewWrap">
+  <img id="previewImg" alt="captured">
+  <div id="previewBar">
+    <button class="btn" id="retakeBtn">撮り直す</button>
+    <button class="btn" id="saveBtn">保存する</button>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  const video = document.getElementById('video');
+  const canvas = document.getElementById('live');
+  const ctx = canvas.getContext('2d', { willReadFrequently:false });
+
+  const permWrap = document.getElementById('permWrap');
+  const startBtn = document.getElementById('startBtn');
+  const errMsg = document.getElementById('errMsg');
+  const flipBtn = document.getElementById('flipBtn');
+  const settingsBtn = document.getElementById('settingsBtn');
+  const settingsPanel = document.getElementById('settingsPanel');
+  const shutterOuter = document.getElementById('shutterOuter');
+  const previewWrap = document.getElementById('previewWrap');
+  const previewImg = document.getElementById('previewImg');
+  const retakeBtn = document.getElementById('retakeBtn');
+  const saveBtn = document.getElementById('saveBtn');
+
+  const countSlider = document.getElementById('countSlider');
+  const sizeSlider = document.getElementById('sizeSlider');
+  const speedSlider = document.getElementById('speedSlider');
+  const hueSlider = document.getElementById('hueSlider');
+
+  let stream = null;
+  let facingMode = 'environment';
+  let W = 0, H = 0, DPR = Math.min(window.devicePixelRatio || 1, 2);
+  let blobs = [];
+  let animId = null;
+  let running = false;
+
+  // ---------- Metaball particles (oil-lamp style) ----------
+  // Many small circles drift through a shared "flow field". Where the field
+  // pulls nearby particles together they fuse into a glowing, stretched
+  // shape (additive blending); where it pulls them apart they separate again.
+  // This is what produces the merge / stretch / split behaviour.
+
+  function rand(a,b){ return a + Math.random()*(b-a); }
+
+  // shared curl-like flow field: returns a heading angle for a given
+  // normalized position (0..1) and time (ms)
+  function flowAngle(x, y, tSec){
+    const a =
+      Math.sin(x*3.1 + tSec*0.55) * Math.cos(y*2.3 - tSec*0.40) * 3.4 +
+      Math.sin((x+y)*2.6 - tSec*0.70) * 1.6 +
+      Math.cos((x-y)*3.7 + tSec*0.33) * 1.1;
+    return a;
+  }
+
+  class Particle{
+    constructor(){ this.reset(true); }
+
+    reset(initial){
+      this.x = rand(0.05,0.95);
+      this.y = rand(0.05,0.95);
+      this.heading = rand(0, Math.PI*2);
+      this.jitterSeed = rand(0,1000);
+      this.sizeMul = rand(0.65, 1.35);
+      // narrow teal / blue-green "pop" family, per the oil-lamp reference
+      this.hueBase = rand(168, 196);
+      this.hueSeed = rand(0,1000);
+    }
+
+    updateScale(){
+      const minSide = Math.min(W,H);
+      const sizePct = parseFloat(sizeSlider.value) / 100;
+      this.r = minSide * sizePct * 0.34 * this.sizeMul;
+    }
+
+    step(t, dtMs){
+      const dtSec = dtMs/1000;
+      const tSec = t/1000;
+      const spdFactor = parseFloat(speedSlider.value) / 5; // 1-10, 5=baseline
+      const speed = 0.055 * spdFactor; // screen-fraction per second
+
+      const target = flowAngle(this.x, this.y, tSec * (0.5*spdFactor+0.3));
+      // ease heading toward the field direction so motion stays smooth,
+      // not jittery — but responsive enough to feel lively
+      let diff = target - this.heading;
+      while(diff > Math.PI) diff -= Math.PI*2;
+      while(diff < -Math.PI) diff += Math.PI*2;
+      this.heading += diff * Math.min(1, 0.06 * spdFactor * dtSec * 10);
+
+      const wob = Math.sin(tSec*1.7 + this.jitterSeed) * 0.15;
+      const hx = Math.cos(this.heading + wob);
+      const hy = Math.sin(this.heading + wob);
+
+      this.x += hx * speed * dtSec;
+      this.y += hy * speed * dtSec;
+
+      if(this.x < -0.08){ this.x = -0.08; this.heading = rand(-0.6,0.6); }
+      if(this.x > 1.08){ this.x = 1.08; this.heading = Math.PI + rand(-0.6,0.6); }
+      if(this.y < -0.08){ this.y = -0.08; this.heading = Math.PI/2 + rand(-0.6,0.6); }
+      if(this.y > 1.08){ this.y = 1.08; this.heading = -Math.PI/2 + rand(-0.6,0.6); }
+    }
+
+    hue(t){
+      const hueRate = parseFloat(hueSlider.value); // 2-30
+      const drift = Math.sin(t*0.00004*hueRate + this.hueSeed) * 14;
+      return this.hueBase + drift; // stays inside the teal/blue-green family
+    }
+
+    draw(t){
+      const cx = this.x * W, cy = this.y * H;
+      const r = this.r;
+      const hue = this.hue(t);
+
+      const grad = ctx.createRadialGradient(cx,cy, 0, cx,cy, r);
+      grad.addColorStop(0.00, `hsla(${hue},95%,62%,0.95)`);
+      grad.addColorStop(0.45, `hsla(${hue},95%,50%,0.55)`);
+      grad.addColorStop(1.00, `hsla(${hue},95%,45%,0)`);
+
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.arc(cx,cy,r,0,Math.PI*2);
+      ctx.fill();
+    }
+  }
+
+  function buildBlobs(){
+    const n = parseInt(countSlider.value,10);
+    blobs = [];
+    for(let i=0;i<n;i++){
+      const p = new Particle();
+      p.updateScale();
+      blobs.push(p);
+    }
+  }
+
+  function syncBlobCount(){
+    const n = parseInt(countSlider.value,10);
+    if(blobs.length < n){
+      while(blobs.length < n){ const p = new Particle(); p.updateScale(); blobs.push(p); }
+    } else if(blobs.length > n){
+      blobs.length = n;
+    }
+  }
+
+  // ---------- Camera ----------
+  async function startCamera(){
+    errMsg.textContent = '';
+
+    // iOS Safari (and most mobile browsers) only expose the camera API on
+    // a secure origin (https, or localhost). Opening the file directly
+    // (file://) or over plain http will silently fail on iPhone.
+    if(!window.isSecureContext || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
+      errMsg.textContent = 'このページが安全な接続(https)で開かれていないため、カメラを使用できません。GitHub Pagesなどhttpsで公開したURLをSafariで開いてください(file://やhttpでは動作しません)。';
+      return;
+    }
+
+    try{
+      if(stream){ stream.getTracks().forEach(t=>t.stop()); }
+      const constraints = {
+        audio:false,
+        video:{
+          facingMode: { ideal: facingMode },
+          width:{ ideal:1280 }, height:{ ideal:1280 }
+        }
+      };
+      stream = await navigator.mediaDevices.getUserMedia(constraints);
+      video.srcObject = stream;
+      await video.play();
+      resize();
+      buildBlobs();
+      if(!running){ running = true; loop(performance.now()); }
+      permWrap.style.display = 'none';
+    }catch(err){
+      errMsg.textContent = 'カメラを起動できませんでした。設定でカメラへのアクセスを許可してください。(' + (err.message||err) + ')';
+    }
+  }
+
+  function resize(){
+    W = window.innerWidth; H = window.innerHeight;
+    canvas.width = W * DPR;
+    canvas.height = H * DPR;
+    canvas.style.width = W+'px';
+    canvas.style.height = H+'px';
+    ctx.setTransform(DPR,0,0,DPR,0,0);
+    blobs.forEach(b=>b.updateScale());
+  }
+  window.addEventListener('resize', resize);
+  window.addEventListener('orientationchange', ()=>setTimeout(resize,150));
+
+  function drawVideoCover(){
+    if(!video.videoWidth) return;
+    const vw = video.videoWidth, vh = video.videoHeight;
+    const canvasRatio = W/H, videoRatio = vw/vh;
+    let sx,sy,sw,sh;
+    if(videoRatio > canvasRatio){
+      sh = vh; sw = vh*canvasRatio; sy = 0; sx = (vw-sw)/2;
+    } else {
+      sw = vw; sh = vw/canvasRatio; sx = 0; sy = (vh-sh)/2;
+    }
+    ctx.save();
+    if(facingMode === 'user'){
+      ctx.translate(W,0); ctx.scale(-1,1);
+    }
+    ctx.drawImage(video, sx,sy,sw,sh, 0,0,W,H);
+    ctx.restore();
+  }
+
+  function loop(t){
+    if(!running) return;
+    drawVideoCover();
+
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    for(const b of blobs){
+      b.step(t, 16.7);
+      b.draw(t);
+    }
+    ctx.restore();
+
+    animId = requestAnimationFrame(loop);
+  }
+
+  // ---------- UI events ----------
+  startBtn.addEventListener('click', startCamera);
+
+  flipBtn.addEventListener('click', ()=>{
+    facingMode = facingMode === 'environment' ? 'user' : 'environment';
+    startCamera();
+  });
+
+  settingsBtn.addEventListener('click', ()=>{
+    settingsPanel.classList.toggle('hidden');
+  });
+
+  countSlider.addEventListener('input', syncBlobCount);
+
+  shutterOuter.addEventListener('click', ()=>{
+    const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
+    previewImg.src = dataUrl;
+    previewWrap.classList.add('show');
+  });
+
+  retakeBtn.addEventListener('click', ()=>{
+    previewWrap.classList.remove('show');
+  });
+
+  saveBtn.addEventListener('click', ()=>{
+    const a = document.createElement('a');
+    a.href = previewImg.src;
+    a.download = 'amoeba-cam-' + Date.now() + '.jpg';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  });
+
+  // start hidden panel state
+  settingsPanel.classList.add('hidden');
+
+})();
+</script>
+</body>
+</html>
