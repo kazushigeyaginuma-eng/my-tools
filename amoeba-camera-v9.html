@@ -1,0 +1,806 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Amoeba Cam — ポップアートな水玉フィルター</title>
+<style>
+  :root{
+    --bg: #0b0d12;
+    --panel: rgba(14,16,22,0.72);
+    --line: rgba(255,255,255,0.10);
+    --text: #eef0f5;
+    --sub: #9aa1b2;
+    --accent1: #17E3C4;
+    --accent2: #0FB8D9;
+    --accent3: #2FD8A0;
+    --accent4: #14C8E8;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color: transparent;}
+  html,body{
+    margin:0; padding:0; height:100%; background:var(--bg); color:var(--text);
+    font-family: -apple-system, "SF Pro Text", "Hiragino Sans", "Noto Sans JP", system-ui, sans-serif;
+    overflow:hidden; overscroll-behavior:none;
+  }
+  #stage{
+    position:fixed; inset:0; display:flex; align-items:center; justify-content:center;
+    background:#000;
+  }
+  video{ display:none; }
+  canvas#live{
+    width:100%; height:100%; object-fit:cover; display:block;
+  }
+
+  #top{
+    position:fixed; top:0; left:0; right:0; z-index:5;
+    display:flex; align-items:center; justify-content:space-between;
+    padding: calc(env(safe-area-inset-top,0px) + 14px) 18px 10px;
+    background: linear-gradient(180deg, rgba(0,0,0,0.55), transparent);
+    pointer-events:none;
+  }
+  #brand{
+    font-size:15px; font-weight:700; letter-spacing:0.02em;
+    display:flex; align-items:center; gap:8px;
+  }
+  #brand .dot{
+    width:9px; height:9px; border-radius:50%;
+    background: conic-gradient(from 0deg, var(--accent1), var(--accent2), var(--accent3), var(--accent4), var(--accent1));
+    box-shadow: 0 0 10px rgba(255,255,255,0.5);
+  }
+  #status{
+    font-size:11px; color:var(--sub); pointer-events:auto;
+  }
+
+  #permWrap{
+    position:fixed; inset:0; z-index:20; display:flex; align-items:center; justify-content:center;
+    background: radial-gradient(120% 120% at 50% 0%, #171a24 0%, #0b0d12 60%);
+    padding:24px;
+  }
+  #permCard{
+    max-width:340px; text-align:center;
+  }
+  #permCard .blobPreview{
+    width:96px; height:96px; margin:0 auto 22px; border-radius:50%;
+    background: conic-gradient(from 90deg, var(--accent1), var(--accent2), var(--accent3), var(--accent4), var(--accent1));
+    filter: blur(0.5px);
+    animation: pulse 3.2s ease-in-out infinite;
+  }
+  @keyframes pulse{
+    0%,100%{ transform: scale(1) rotate(0deg); border-radius:50% 45% 55% 48%;}
+    33%{ transform: scale(1.08) rotate(8deg); border-radius:42% 58% 45% 55%;}
+    66%{ transform: scale(0.94) rotate(-6deg); border-radius:55% 45% 60% 40%;}
+  }
+  #permCard h1{ font-size:20px; margin:0 0 10px; font-weight:700; }
+  #permCard p{ font-size:13.5px; line-height:1.7; color:var(--sub); margin:0 0 26px; }
+  .btn{
+    appearance:none; border:none; cursor:pointer; font-family:inherit;
+  }
+  #startBtn{
+    width:100%; padding:15px 20px; border-radius:14px; font-size:15px; font-weight:700;
+    color:#0b0d12; background: linear-gradient(120deg, var(--accent1), var(--accent3));
+  }
+  #errMsg{ margin-top:14px; font-size:12px; color:#ff9d9d; min-height:16px; }
+
+  #bottom{
+    position:fixed; left:0; right:0; bottom:0; z-index:5;
+    padding: 14px 18px calc(env(safe-area-inset-bottom,0px) + 18px);
+    background: linear-gradient(0deg, rgba(0,0,0,0.65), transparent);
+  }
+  .panel{
+    background:var(--panel); border:1px solid var(--line); border-radius:18px;
+    padding:14px 16px; backdrop-filter: blur(14px);
+    margin-bottom:12px;
+  }
+  .sliderRow{ display:flex; align-items:center; gap:12px; padding:6px 0; }
+  .sliderRow label{ font-size:11.5px; color:var(--sub); width:78px; flex-shrink:0; }
+  .sliderRow input[type=range]{
+    flex:1; -webkit-appearance:none; height:4px; border-radius:2px;
+    background: linear-gradient(90deg, var(--accent1), var(--accent2), var(--accent3));
+    outline:none;
+  }
+  .sliderRow input[type=range]::-webkit-slider-thumb{
+    -webkit-appearance:none; width:18px; height:18px; border-radius:50%;
+    background:#fff; box-shadow:0 1px 4px rgba(0,0,0,0.4); border:2px solid #0b0d12;
+  }
+
+  #controls{
+    display:grid; grid-template-columns: 56px 1fr 56px; align-items:center; gap:14px;
+  }
+  #flipBtn, #settingsBtn{
+    width:52px; height:52px; border-radius:50%; background:rgba(255,255,255,0.08);
+    border:1px solid var(--line); color:var(--text); font-size:20px;
+    display:flex; align-items:center; justify-content:center;
+  }
+  #shutterOuter{
+    width:74px; height:74px; border-radius:50%; margin:0 auto;
+    border:3px solid rgba(255,255,255,0.85);
+    display:flex; align-items:center; justify-content:center;
+    background:transparent;
+  }
+  #shutterInner{
+    width:60px; height:60px; border-radius:50%;
+    background: conic-gradient(from 0deg, var(--accent1), var(--accent2), var(--accent3), var(--accent4), var(--accent1));
+    transition: transform 0.12s ease;
+  }
+  #shutterOuter:active #shutterInner{ transform: scale(0.85); }
+
+  #settingsPanel.hidden, #hintPanel.hidden{ display:none; }
+
+  #hintPanel p{ margin:0; font-size:11.5px; color:var(--sub); line-height:1.6; }
+
+  /* Preview / result overlay */
+  #previewWrap{
+    position:fixed; inset:0; z-index:15; background:#000; display:none;
+    flex-direction:column;
+  }
+  #previewWrap.show{ display:flex; }
+  #previewImg{ flex:1; width:100%; object-fit:contain; background:#000; }
+  #previewBar{
+    display:flex; gap:12px; padding: 16px 20px calc(env(safe-area-inset-bottom,0px) + 20px);
+    background: rgba(10,11,15,0.95);
+  }
+  #previewBar button{
+    flex:1; padding:14px; border-radius:14px; font-size:14.5px; font-weight:700;
+  }
+  #retakeBtn{ background:rgba(255,255,255,0.08); color:var(--text); border:1px solid var(--line); }
+  #saveBtn{ background: linear-gradient(120deg, var(--accent4), var(--accent2)); color:#1a1200; }
+</style>
+</head>
+<body>
+
+<div id="stage">
+  <video id="video" playsinline muted autoplay></video>
+  <canvas id="live"></canvas>
+</div>
+
+<div id="top">
+  <div id="brand"><span class="dot"></span>Amoeba Cam</div>
+  <div id="status">背景をビビッドな水玉でやさしく隠す</div>
+</div>
+
+<div id="permWrap">
+  <div id="permCard">
+    <div class="blobPreview"></div>
+    <h1>Amoeba Cam</h1>
+    <p>撮影前に、画面の上をビビッドな青・緑・オレンジの水玉が漂い、近づけばくっついて大きくなり、また分かれていきます。背景に映り込む人やものを、ポップな色の強さでさりげなく隠します。カメラへのアクセスを許可してください。</p>
+    <button class="btn" id="startBtn">カメラを起動する</button>
+    <div id="errMsg"></div>
+  </div>
+</div>
+
+<div id="bottom">
+  <div class="panel" id="settingsPanel">
+    <div class="sliderRow">
+      <label>数 / 量</label>
+      <input type="range" id="countSlider" min="14" max="50" step="1" value="25">
+    </div>
+    <div class="sliderRow">
+      <label>粒の大きさ</label>
+      <input type="range" id="sizeSlider" min="4" max="14" step="1" value="8">
+    </div>
+    <div class="sliderRow">
+      <label>動きの速さ</label>
+      <input type="range" id="speedSlider" min="1" max="10" step="1" value="6">
+    </div>
+    <div class="sliderRow">
+      <label>色の揺れ</label>
+      <input type="range" id="hueSlider" min="2" max="30" step="1" value="10">
+    </div>
+  </div>
+
+  <div id="controls">
+    <button class="btn" id="flipBtn">⟲</button>
+    <div id="shutterOuter"><div id="shutterInner"></div></div>
+    <button class="btn" id="settingsBtn">✦</button>
+  </div>
+</div>
+
+<div id="previewWrap">
+  <img id="previewImg" alt="captured">
+  <div id="previewBar">
+    <button class="btn" id="retakeBtn">撮り直す</button>
+    <button class="btn" id="saveBtn">共有 / 保存</button>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  const video = document.getElementById('video');
+  const canvas = document.getElementById('live');
+  const ctx = canvas.getContext('2d', { willReadFrequently:false });
+
+  const permWrap = document.getElementById('permWrap');
+  const startBtn = document.getElementById('startBtn');
+  const errMsg = document.getElementById('errMsg');
+  const flipBtn = document.getElementById('flipBtn');
+  const settingsBtn = document.getElementById('settingsBtn');
+  const settingsPanel = document.getElementById('settingsPanel');
+  const shutterOuter = document.getElementById('shutterOuter');
+  const previewWrap = document.getElementById('previewWrap');
+  const previewImg = document.getElementById('previewImg');
+  const retakeBtn = document.getElementById('retakeBtn');
+  const saveBtn = document.getElementById('saveBtn');
+
+  const countSlider = document.getElementById('countSlider');
+  const sizeSlider = document.getElementById('sizeSlider');
+  const speedSlider = document.getElementById('speedSlider');
+  const hueSlider = document.getElementById('hueSlider');
+
+  let stream = null;
+  let facingMode = 'environment';
+  let W = 0, H = 0, DPR = Math.min(window.devicePixelRatio || 1, 2);
+  let blobs = [];
+  let animId = null;
+  let running = false;
+  let lastFrameTime = null;
+
+  // ---------- Metaball particles (oil-lamp style) ----------
+  // Many small circles drift through a shared "flow field". Where the field
+  // pulls nearby particles together they fuse into a glowing, stretched
+  // shape (additive blending); where it pulls them apart they separate again.
+  // This is what produces the merge / stretch / split behaviour.
+
+  function rand(a,b){ return a + Math.random()*(b-a); }
+
+  // A deliberately small, bold palette — five flat, saturated colours,
+  // weighted so turquoise stays the "signature" hue and the rest read as
+  // accents. Kept short on purpose: more hues would start to look muddy
+  // rather than graphic once dots overlap.
+  const COLOR_FAMILIES = [
+    { hue: 178, weight: 0.32 }, // turquoise — the signature colour
+    { hue: 210, weight: 0.22 }, // cobalt blue
+    { hue: 30,  weight: 0.20 }, // orange
+    { hue: 330, weight: 0.14 }, // magenta / hot pink
+    { hue: 92,  weight: 0.12 }, // lime green
+  ];
+  function pickColorFamily(){
+    const r = Math.random();
+    let acc = 0;
+    for(const f of COLOR_FAMILIES){
+      acc += f.weight;
+      if(r <= acc) return f;
+    }
+    return COLOR_FAMILIES[0];
+  }
+
+  // shared curl-like flow field: returns a heading angle for a given
+  // normalized position (0..1) and time (ms). A slow global drift is
+  // added so the whole swirl pattern migrates across the screen instead
+  // of particles orbiting the same fixed pocket forever.
+  function flowAngle(x, y, tSec){
+    const driftX = Math.sin(tSec*0.05) * 0.5;
+    const driftY = Math.cos(tSec*0.037) * 0.5;
+    const fx = x + driftX, fy = y + driftY;
+    const a =
+      Math.sin(fx*3.1 + tSec*0.55) * Math.cos(fy*2.3 - tSec*0.40) * 3.4 +
+      Math.sin((fx+fy)*2.6 - tSec*0.70) * 1.6 +
+      Math.cos((fx-fy)*3.7 + tSec*0.33) * 1.1;
+    return a;
+  }
+
+  // ---------- Motion reactivity ----------
+  // Downsampled frame-differencing: cheap way to tell where in frame
+  // something (a person, a hand) is moving, without any ML model.
+  const MOTION_W = 48, MOTION_H = 32;
+  let motionCanvas, motionCtx, motionGrid, prevMotionFrame = null;
+
+  function initMotion(){
+    motionCanvas = document.createElement('canvas');
+    motionCanvas.width = MOTION_W;
+    motionCanvas.height = MOTION_H;
+    motionCtx = motionCanvas.getContext('2d', { willReadFrequently:true });
+    motionGrid = new Float32Array(MOTION_W*MOTION_H);
+    prevMotionFrame = null;
+  }
+
+  function updateMotion(){
+    if(!video.videoWidth || !motionCtx) return;
+    motionCtx.save();
+    if(facingMode === 'user'){ motionCtx.translate(MOTION_W,0); motionCtx.scale(-1,1); }
+    motionCtx.drawImage(video, 0,0, MOTION_W, MOTION_H);
+    motionCtx.restore();
+
+    let frame;
+    try{ frame = motionCtx.getImageData(0,0,MOTION_W,MOTION_H).data; }
+    catch(e){ return; }
+
+    if(prevMotionFrame){
+      for(let i=0, p=0; i<MOTION_W*MOTION_H; i++, p+=4){
+        const lum = frame[p] + frame[p+1] + frame[p+2];
+        const prevLum = prevMotionFrame[p] + prevMotionFrame[p+1] + prevMotionFrame[p+2];
+        const diff = Math.abs(lum - prevLum) / 3;
+        const val = diff > 12 ? Math.min(1, diff/70) : 0;
+        // ease so motion trails smoothly rather than flickering pixel-by-pixel
+        motionGrid[i] = motionGrid[i]*0.80 + val*0.20;
+      }
+    }
+    prevMotionFrame = frame;
+  }
+
+  function motionAt(x,y){
+    if(!motionGrid) return 0;
+    const mx = Math.min(MOTION_W-1, Math.max(0, (x*MOTION_W)|0));
+    const my = Math.min(MOTION_H-1, Math.max(0, (y*MOTION_H)|0));
+    return motionGrid[my*MOTION_W+mx];
+  }
+
+  class Particle{
+    constructor(){ this.reset(true); }
+
+    reset(initial){
+      // avoid spawning inside the centre "keep clear" zone (roughly circular
+      // in normalized space — close enough for this purpose)
+      do{
+        this.x = rand(0.05,0.95);
+        this.y = rand(0.05,0.95);
+      } while(Math.hypot(this.x-0.5, this.y-0.44) < 0.26);
+      this.heading = rand(0, Math.PI*2);
+      this.jitterSeed = rand(0,1000);
+      this.sizeMul = rand(0.65, 1.35);
+
+      // a curated 5-colour palette, not a continuous rainbow — each particle
+      // is assigned one bold, distinct family (with only a few degrees of
+      // jitter) so the piece reads as a small set of strong flat colours,
+      // Kusama-dot style, rather than a smeared gradient of hues
+      const family = pickColorFamily();
+      this.hueBase = family.hue + rand(-6, 6);
+      this.hueSeed = rand(0,1000);
+
+      // each particle reads the flow field from a slightly different spot,
+      // so a group doesn't move in perfect lock-step — more organic variety
+      this.fieldOffX = rand(-0.05,0.05);
+      this.fieldOffY = rand(-0.05,0.05);
+
+      // "breathing" size pulse: current slider size is the *minimum*, and
+      // each particle randomly, independently grows/shrinks above that
+      this.pulse = rand(0.1, 0.6);
+      this.pulseTarget = rand(0.2, 1.6);
+      this.nextPulseRetarget = rand(0,1) * 1000;
+      this.pulseEaseSpeed = rand(0.00035, 0.0009); // differing rhythm per particle
+
+      // coreWarmth only spikes on a merge/absorption event (forcing a brief
+      // orange flash) and otherwise decays back to 0 — dots hold their
+      // assigned flat colour rather than ambiently drifting toward orange
+      this.coreWarmth = 0;
+
+      // orange ember flicker at the core — bursts on its own schedule
+      this.flickerStart = -99999;
+      this.flickerLen = 500;
+      this.nextFlickerTime = performance.now() + rand(2500, 7000);
+
+      // "merge" event state — when two particles overlap deeply, one
+      // absorbs the other: a temporary size boost + forced orange glow
+      this.mergeBoost = 0;
+      this.mergeCooldownUntil = 0;
+    }
+
+    updateScale(){
+      const minSide = Math.min(W,H);
+      const sizePct = parseFloat(sizeSlider.value) / 100;
+      this.r = minSide * sizePct * 0.34 * this.sizeMul;
+    }
+
+    step(t, dtMs){
+      const dtSec = dtMs/1000;
+      const tSec = t/1000;
+      const spdFactor = parseFloat(speedSlider.value) / 5; // 1-10, 5=baseline
+      const speed = 0.075 * spdFactor; // screen-fraction per second — faster, livelier drift
+
+      const target = flowAngle(this.x+this.fieldOffX, this.y+this.fieldOffY, tSec * (0.5*spdFactor+0.3));
+      // ease heading toward the field direction so motion stays smooth,
+      // not jittery — but responsive enough to feel lively
+      let diff = target - this.heading;
+      while(diff > Math.PI) diff -= Math.PI*2;
+      while(diff < -Math.PI) diff += Math.PI*2;
+      this.heading += diff * Math.min(1, 0.06 * spdFactor * dtSec * 10);
+
+      // layered sine wobble at different frequencies — a simple Lissajous-
+      // style superposition so the path snakes and curls (never a straight
+      // line) instead of drifting flatly along the field
+      const wob =
+        Math.sin(tSec*1.7 + this.jitterSeed) * 0.28 +
+        Math.sin(tSec*0.85 + this.jitterSeed*1.7) * 0.42 +
+        Math.sin(tSec*3.3 + this.jitterSeed*0.5) * 0.16;
+      const hx = Math.cos(this.heading + wob);
+      const hy = Math.sin(this.heading + wob);
+
+      this.x += hx * speed * dtSec;
+      this.y += hy * speed * dtSec;
+
+      // keep the very centre of frame clear — particles are gently pushed
+      // outward the closer they drift toward the middle of the screen
+      const cx = this.x*W, cy = this.y*H;
+      const centerX = W*0.5, centerY = H*0.44;
+      const dcx = cx-centerX, dcy = cy-centerY;
+      const cdist = Math.sqrt(dcx*dcx + dcy*dcy) || 0.0001;
+      const exclusionR = Math.min(W,H) * 0.36;
+      if(cdist < exclusionR){
+        const push = (1 - cdist/exclusionR) * Math.min(W,H) * 0.30;
+        this.x += (dcx/cdist) * push * dtSec / W;
+        this.y += (dcy/cdist) * push * dtSec / H;
+      }
+
+      // react to real movement in the camera frame — gently pushed away
+      // from wherever something (a person, a hand) is moving right now
+      const m0 = motionAt(this.x, this.y);
+      if(m0 > 0.03){
+        const eps = 0.025;
+        const gx = motionAt(Math.min(0.99,this.x+eps), this.y) - m0;
+        const gy = motionAt(this.x, Math.min(0.99,this.y+eps)) - m0;
+        const react = 0.55;
+        this.x -= gx * react * m0 * dtSec;
+        this.y -= gy * react * m0 * dtSec;
+
+        // a burst of motion can also spark an early ember flicker
+        if(m0 > 0.4 && t > this.flickerStart + this.flickerLen && Math.random() < 0.02){
+          this.flickerStart = t;
+          this.flickerLen = rand(250, 550);
+        }
+      }
+
+      if(this.x < -0.08){ this.x = -0.08; this.heading = rand(-0.6,0.6); }
+      if(this.x > 1.08){ this.x = 1.08; this.heading = Math.PI + rand(-0.6,0.6); }
+      if(this.y < -0.08){ this.y = -0.08; this.heading = Math.PI/2 + rand(-0.6,0.6); }
+      if(this.y > 1.08){ this.y = 1.08; this.heading = -Math.PI/2 + rand(-0.6,0.6); }
+
+      // breathing: ease toward a randomly re-picked pulse target so growth
+      // never falls into a fixed loop, then pick a new target periodically
+      if(t > this.nextPulseRetarget){
+        this.pulseTarget = rand(0.1, 1.3);
+        this.nextPulseRetarget = t + rand(2500, 6500);
+      }
+      this.pulse += (this.pulseTarget - this.pulse) * this.pulseEaseSpeed * dtMs;
+
+      // merge-boost decays back down after an absorption event
+      this.mergeBoost += (0 - this.mergeBoost) * 0.0022 * dtMs;
+
+      // core warmth decays back to 0 after any merge-event spike — dots
+      // hold their flat, assigned colour the rest of the time
+      this.coreWarmth += (0 - this.coreWarmth) * 0.0012 * dtMs;
+
+      // schedule the next ember flicker if none is due to real motion —
+      // frequent and punchy so the blinking is clearly part of the design
+      if(t > this.nextFlickerTime){
+        this.flickerStart = t;
+        this.flickerLen = rand(450, 1200);
+        this.nextFlickerTime = t + rand(1600, 4200);
+      }
+    }
+
+    hue(t){
+      const hueRate = parseFloat(hueSlider.value); // 2-30
+      const drift = Math.sin(t*0.00004*hueRate + this.hueSeed) * 4;
+      return this.hueBase + drift; // stays true to its assigned palette colour
+    }
+
+    currentRadius(){
+      // slider size = minimum; pulse adds growth, merge-boost adds a
+      // temporary extra swell right after absorbing another particle
+      return this.r * (1 + this.pulse) * (1 + this.mergeBoost*2.6);
+    }
+
+    flickerIntensity(t){
+      const dt = t - this.flickerStart;
+      if(dt < 0 || dt > this.flickerLen) return 0;
+      // snappy on/off rather than a smooth glow rise-and-fall — reads as
+      // a graphic blink, not a light source
+      const p = dt/this.flickerLen;
+      return p < 0.5 ? 1 : Math.max(0, 1 - (p-0.5)*2);
+    }
+
+    draw(t){
+      const cx = this.x * W, cy = this.y * H;
+      const r = this.currentRadius();
+      const hue = this.hue(t);
+
+      // flat, solid dot — Kusama-style: no glow, no soft falloff, just a
+      // bold, saturated disc. Colour still drifts toward orange on fusion.
+      const coreHue = hue + (30 - hue) * this.coreWarmth;
+      const coreLight = 48 - this.coreWarmth*4;
+      ctx.fillStyle = `hsla(${coreHue},100%,${coreLight}%,0.93)`;
+      ctx.beginPath();
+      ctx.arc(cx,cy,r,0,Math.PI*2);
+      ctx.fill();
+
+      // a slightly darker ring at the very edge gives it a crisp, printed
+      // "sticker" edge rather than a photographic bloom
+      ctx.strokeStyle = `hsla(${coreHue},100%,${Math.max(20,coreLight-16)}%,0.5)`;
+      ctx.lineWidth = Math.max(1, r*0.06);
+      ctx.stroke();
+
+      // orange flicker — a smaller solid dot appearing/disappearing inside
+      // the larger one, like a dot-within-a-dot pattern, rather than a glow
+      const flicker = this.flickerIntensity(t);
+      if(flicker > 0.02){
+        ctx.fillStyle = `hsla(28,100%,58%,${(flicker*0.95).toFixed(3)})`;
+        ctx.beginPath();
+        ctx.arc(cx,cy, r*0.44, 0, Math.PI*2);
+        ctx.fill();
+        ctx.fill();
+      }
+    }
+  }
+
+  function buildBlobs(){
+    const n = parseInt(countSlider.value,10);
+    blobs = [];
+    for(let i=0;i<n;i++){
+      const p = new Particle();
+      p.updateScale();
+      blobs.push(p);
+    }
+  }
+
+  function syncBlobCount(){
+    const n = parseInt(countSlider.value,10);
+    if(blobs.length < n){
+      while(blobs.length < n){ const p = new Particle(); p.updateScale(); blobs.push(p); }
+    } else if(blobs.length > n){
+      blobs.length = n;
+    }
+  }
+
+  // ---------- Camera ----------
+  async function startCamera(){
+    errMsg.textContent = '';
+
+    // iOS Safari (and most mobile browsers) only expose the camera API on
+    // a secure origin (https, or localhost). Opening the file directly
+    // (file://) or over plain http will silently fail on iPhone.
+    if(!window.isSecureContext || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
+      errMsg.textContent = 'このページが安全な接続(https)で開かれていないため、カメラを使用できません。GitHub Pagesなどhttpsで公開したURLをSafariで開いてください(file://やhttpでは動作しません)。';
+      return;
+    }
+
+    try{
+      if(stream){ stream.getTracks().forEach(t=>t.stop()); }
+      const constraints = {
+        audio:false,
+        video:{
+          facingMode: { ideal: facingMode },
+          width:{ ideal:1280 }, height:{ ideal:1280 }
+        }
+      };
+      stream = await navigator.mediaDevices.getUserMedia(constraints);
+      video.srcObject = stream;
+      await video.play();
+      resize();
+      initMotion();
+      buildBlobs();
+      if(!running){ running = true; loop(performance.now()); }
+      permWrap.style.display = 'none';
+    }catch(err){
+      errMsg.textContent = 'カメラを起動できませんでした。設定でカメラへのアクセスを許可してください。(' + (err.message||err) + ')';
+    }
+  }
+
+  function resize(){
+    W = window.innerWidth; H = window.innerHeight;
+    canvas.width = W * DPR;
+    canvas.height = H * DPR;
+    canvas.style.width = W+'px';
+    canvas.style.height = H+'px';
+    ctx.setTransform(DPR,0,0,DPR,0,0);
+    blobs.forEach(b=>b.updateScale());
+  }
+  window.addEventListener('resize', resize);
+  window.addEventListener('orientationchange', ()=>setTimeout(resize,150));
+
+  function drawVideoCover(){
+    if(!video.videoWidth) return;
+    const vw = video.videoWidth, vh = video.videoHeight;
+    const canvasRatio = W/H, videoRatio = vw/vh;
+    let sx,sy,sw,sh;
+    if(videoRatio > canvasRatio){
+      sh = vh; sw = vh*canvasRatio; sy = 0; sx = (vw-sw)/2;
+    } else {
+      sw = vw; sh = vw/canvasRatio; sx = 0; sy = (vh-sh)/2;
+    }
+    ctx.save();
+    if(facingMode === 'user'){
+      ctx.translate(W,0); ctx.scale(-1,1);
+    }
+    ctx.drawImage(video, sx,sy,sw,sh, 0,0,W,H);
+    ctx.restore();
+  }
+
+  const linkStates = new Map(); // key "i-j" -> current strength 0..1
+
+  function drawLinks(t, dtMs){
+    const n = blobs.length;
+    if(n < 2) return;
+    const minSide = Math.min(W,H);
+    const maxDist = minSide * 0.24; // wider reach — connections read as a real network
+    const maxLinksPerParticle = 3;
+    const active = new Map(); // key -> target strength this frame
+
+    for(let i=0;i<n;i++){
+      const a = blobs[i];
+      const candidates = [];
+      for(let j=0;j<n;j++){
+        if(j===i) continue;
+        const b = blobs[j];
+        const dx = (b.x-a.x)*W, dy = (b.y-a.y)*H;
+        const d = Math.sqrt(dx*dx+dy*dy);
+        if(d < maxDist) candidates.push([d,j]);
+      }
+      candidates.sort((p,q)=>p[0]-q[0]);
+
+      for(let k=0; k<Math.min(maxLinksPerParticle, candidates.length); k++){
+        const [d, j] = candidates[k];
+        const key = i<j ? i+'-'+j : j+'-'+i;
+        const target = 1 - d/maxDist;
+        const prev = active.get(key);
+        if(prev===undefined || target>prev) active.set(key, target);
+      }
+    }
+
+    // ease every known link toward its target strength (0 if not active
+    // this frame) — kept slow so a connection, once formed, holds for a
+    // while rather than flickering in and out frame to frame
+    const ease = Math.min(1, 0.0022 * dtMs);
+    for(const key of new Set([...linkStates.keys(), ...active.keys()])){
+      const target = active.has(key) ? active.get(key) : 0;
+      const cur = linkStates.get(key) || 0;
+      const next = cur + (target - cur) * ease;
+      if(next < 0.01 && !active.has(key)) linkStates.delete(key);
+      else linkStates.set(key, next);
+    }
+
+    if(linkStates.size === 0) return;
+
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    ctx.lineCap = 'round';
+
+    for(const [key, strength] of linkStates){
+      if(strength < 0.01) continue;
+      const [i,j] = key.split('-').map(Number);
+      const a = blobs[i], b = blobs[j];
+      if(!a || !b) continue;
+      const ax=a.x*W, ay=a.y*H, bx=b.x*W, by=b.y*H;
+      const hue = (a.hue(t) + b.hue(t)) / 2;
+
+      ctx.strokeStyle = `hsla(${hue},95%,72%,${(strength*0.75).toFixed(3)})`;
+      ctx.lineWidth = 1.6 + strength*2.4;
+      ctx.beginPath();
+      ctx.moveTo(ax,ay);
+      ctx.lineTo(bx,by);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  // ---------- Merge / absorption ----------
+  // When two particles overlap deeply for a moment, one absorbs the other:
+  // a temporary size swell + forced orange glow, while the absorbed one
+  // respawns elsewhere. This is what reads as "particles disappearing, or
+  // fusing and growing" rather than a static crowd of dots.
+  function updateMerges(t){
+    const n = blobs.length;
+    if(n < 2) return;
+    const consumed = new Set();
+
+    for(let i=0;i<n;i++){
+      if(consumed.has(i)) continue;
+      const a = blobs[i];
+      if(t < a.mergeCooldownUntil) continue;
+
+      for(let j=i+1;j<n;j++){
+        if(consumed.has(j)) continue;
+        const b = blobs[j];
+        if(t < b.mergeCooldownUntil) continue;
+
+        const dx=(b.x-a.x)*W, dy=(b.y-a.y)*H;
+        const d = Math.sqrt(dx*dx+dy*dy);
+        const sumR = a.currentRadius() + b.currentRadius();
+
+        if(d < sumR*0.55 && Math.random() < 0.035){
+          const winner = Math.random() < 0.5 ? a : b;
+          const loser = winner === a ? b : a;
+
+          winner.mergeBoost = 1;
+          winner.coreWarmth = 1; // spikes orange, then decays back to its flat colour
+          winner.flickerStart = t;
+          winner.flickerLen = rand(500, 900);
+          winner.mergeCooldownUntil = t + 2600;
+
+          loser.reset(false);
+          loser.updateScale();
+          loser.mergeCooldownUntil = t + 2600;
+
+          consumed.add(i); consumed.add(j);
+          break;
+        }
+      }
+    }
+  }
+
+  function loop(t){
+    if(!running) return;
+
+    // measure the real time between frames — some displays (many PC
+    // monitors, ProMotion) update faster than 60Hz, so assuming a fixed
+    // 16.7ms step would make the animation run too fast on those screens.
+    // Clamped so returning from a backgrounded tab doesn't cause a jump.
+    const dt = lastFrameTime === null ? 16.7 : Math.min(50, t - lastFrameTime);
+    lastFrameTime = t;
+
+    drawVideoCover();
+    updateMotion();
+
+    for(const b of blobs){ b.step(t, dt); }
+    updateMerges(t);
+
+    drawLinks(t, dt);
+
+    ctx.save();
+    ctx.globalCompositeOperation = 'source-over';
+    for(const b of blobs){
+      b.draw(t);
+    }
+    ctx.restore();
+
+    animId = requestAnimationFrame(loop);
+  }
+
+  // ---------- UI events ----------
+  startBtn.addEventListener('click', startCamera);
+
+  flipBtn.addEventListener('click', ()=>{
+    facingMode = facingMode === 'environment' ? 'user' : 'environment';
+    startCamera();
+  });
+
+  settingsBtn.addEventListener('click', ()=>{
+    settingsPanel.classList.toggle('hidden');
+  });
+
+  countSlider.addEventListener('input', syncBlobCount);
+
+  shutterOuter.addEventListener('click', ()=>{
+    const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
+    previewImg.src = dataUrl;
+    previewWrap.classList.add('show');
+  });
+
+  retakeBtn.addEventListener('click', ()=>{
+    previewWrap.classList.remove('show');
+  });
+
+  saveBtn.addEventListener('click', async ()=>{
+    const filename = 'amoeba-cam-' + Date.now() + '.jpg';
+
+    // On iOS Safari, the download attribute often just opens the image
+    // instead of saving it. The share sheet's "Image を保存" option is the
+    // reliable way to land it in the Photos app, so try that first.
+    try{
+      const res = await fetch(previewImg.src);
+      const blob = await res.blob();
+      const file = new File([blob], filename, { type: 'image/jpeg' });
+
+      if(navigator.canShare && navigator.canShare({ files:[file] })){
+        await navigator.share({ files:[file] });
+        return;
+      }
+    }catch(e){
+      // fall through to the download-link approach below
+    }
+
+    const a = document.createElement('a');
+    a.href = previewImg.src;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  });
+
+  // start hidden panel state
+  settingsPanel.classList.add('hidden');
+
+})();
+</script>
+</body>
+</html>
