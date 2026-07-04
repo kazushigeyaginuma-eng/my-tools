@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>基本情報・社内ポータル系 | スタイル工房 スタッフポータル</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=Noto+Serif+JP:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --g900:#1E3829; --g800:#2C5040; --g700:#3D6B4F; --g600:#5A9070;
+  --g200:#C8E0D0; --g100:#EEF5F1;
+  --warm:#E8DDD0; --bg:#F2EEE8;
+  --dark:#1A1A1A; --text:#333; --sub:#666; --muted:#999;
+  --white:#FFF;
+  --red:#C0392B; --orange:#C0602B; --blue:#2C5F8A;
+  --gold:#9A7B2F; --teal:#1A7A6E;
+  --r:10px; --r-lg:16px;
+  --sh:0 2px 16px rgba(0,0,0,.07);
+  --sh-h:0 8px 32px rgba(0,0,0,.13);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--text);}
+
+/* HEADER */
+header{
+  background:var(--g800);height:56px;padding:0 32px;
+  display:flex;align-items:center;justify-content:space-between;
+  position:sticky;top:0;z-index:100;
+  box-shadow:0 2px 12px rgba(0,0,0,.18);
+}
+.logo{display:flex;align-items:center;gap:10px;text-decoration:none;}
+.logo-mark{
+  width:32px;height:32px;border-radius:8px;
+  background:rgba(255,255,255,.18);
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Noto Serif JP',serif;font-size:14px;font-weight:700;color:#fff;
+}
+.logo-name{font-size:14px;font-weight:700;color:#fff;letter-spacing:.05em;}
+.logo-tag{font-size:9px;color:rgba(255,255,255,.55);letter-spacing:.12em;margin-top:1px;}
+nav{display:flex;gap:2px;}
+nav a{color:rgba(255,255,255,.75);font-size:12px;padding:6px 13px;border-radius:20px;text-decoration:none;transition:all .18s;}
+nav a:hover{background:rgba(255,255,255,.14);color:#fff;}
+nav a.active{background:rgba(255,255,255,.18);color:#fff;}
+
+/* BREADCRUMB */
+.breadcrumb{
+  background:#fff;border-bottom:1px solid var(--warm);
+  padding:10px 40px;font-size:11px;color:var(--muted);
+  display:flex;align-items:center;gap:6px;
+}
+.breadcrumb a{color:var(--g700);text-decoration:none;}
+.breadcrumb a:hover{text-decoration:underline;}
+
+/* PAGE HERO */
+.page-hero{
+  background:linear-gradient(110deg,var(--g900) 0%,var(--g800) 55%,var(--g700) 100%);
+  padding:32px 40px 36px;
+}
+.page-hero-inner{max-width:1120px;margin:0 auto;display:flex;align-items:center;gap:20px;}
+.page-hero-icon{
+  width:60px;height:60px;border-radius:16px;
+  background:rgba(255,255,255,.15);
+  display:flex;align-items:center;justify-content:center;
+  font-size:30px;flex-shrink:0;
+}
+.page-hero-ttl{font-family:'Noto Serif JP',serif;font-size:26px;font-weight:700;color:#fff;margin-bottom:6px;}
+.page-hero-sub{font-size:12px;color:rgba(255,255,255,.7);line-height:1.7;}
+
+/* MAIN */
+.main{max-width:1120px;margin:32px auto 48px;padding:0 40px;}
+
+/* SECTION LABEL */
+.sec-label{
+  font-size:10px;font-weight:700;color:var(--muted);
+  letter-spacing:.18em;text-transform:uppercase;
+  display:flex;align-items:center;gap:8px;
+  margin-bottom:16px;
+}
+.sec-label::after{content:'';flex:1;height:1px;background:var(--warm);}
+
+/* ITEM GRID：大カード形式 */
+.item-grid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:16px;
+  margin-bottom:40px;
+}
+.item-card{
+  background:#fff;
+  border:1.5px solid var(--warm);
+  border-radius:var(--r-lg);
+  overflow:hidden;
+  text-decoration:none;
+  display:flex;flex-direction:column;
+  transition:all .22s;
+  cursor:pointer;
+}
+.item-card:hover{
+  border-color:var(--g600);
+  box-shadow:var(--sh-h);
+  transform:translateY(-4px);
+}
+.item-card-top{
+  height:100px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:42px;
+  position:relative;
+}
+.item-card-badge{
+  position:absolute;top:10px;right:10px;
+  font-size:9px;font-weight:700;
+  padding:2px 9px;border-radius:10px;
+  background:var(--g700);color:#fff;
+}
+.item-card-badge.soon{background:#ccc;color:#fff;}
+.item-card-body{padding:18px 20px 20px;flex:1;display:flex;flex-direction:column;gap:6px;}
+.item-card-name{font-size:15px;font-weight:700;color:var(--dark);font-family:'Noto Serif JP',serif;}
+.item-card-desc{font-size:11px;color:var(--sub);line-height:1.65;flex:1;}
+.item-card-tags{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px;}
+.itag{
+  font-size:9px;font-weight:700;
+  padding:2px 8px;border-radius:10px;
+  background:var(--g100);color:var(--g700);
+}
+.item-card-cta{
+  margin-top:14px;
+  background:var(--g800);color:#fff;
+  font-size:12px;font-weight:700;
+  padding:10px;border-radius:8px;
+  text-align:center;
+  transition:background .18s;
+}
+.item-card:hover .item-card-cta{background:var(--g700);}
+.item-card-cta.disabled{background:#ccc;cursor:default;}
+
+/* カード背景色 */
+.ic-teal  {background:linear-gradient(135deg,#E6F4F2 0%,#D0EDE9 100%);}
+.ic-blue  {background:linear-gradient(135deg,#E8F0FB 0%,#D5E5F8 100%);}
+.ic-green {background:linear-gradient(135deg,#EEF5F1 0%,#DCF0E5 100%);}
+.ic-gold  {background:linear-gradient(135deg,#FDF5E0 0%,#F8ECC5 100%);}
+.ic-red   {background:linear-gradient(135deg,#FDECEA 0%,#FAD9D6 100%);}
+.ic-purple{background:linear-gradient(135deg,#F0EBF8 0%,#E3D8F5 100%);}
+
+/* RELATED LINKS */
+.related-grid{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:12px;
+}
+.related-card{
+  background:#fff;border:1.5px solid var(--warm);border-radius:var(--r);
+  padding:16px 18px;
+  display:flex;align-items:center;gap:14px;
+  text-decoration:none;transition:all .18s;cursor:pointer;
+}
+.related-card:hover{border-color:var(--g600);box-shadow:var(--sh);transform:translateY(-2px);}
+.related-icon{font-size:24px;flex-shrink:0;}
+.related-body{}
+.related-name{font-size:13px;font-weight:700;color:var(--dark);margin-bottom:2px;}
+.related-desc{font-size:10.5px;color:var(--muted);}
+.related-arr{font-size:16px;color:var(--muted);margin-left:auto;flex-shrink:0;}
+
+/* FOOTER */
+footer{background:var(--g900);padding:20px 40px;display:flex;align-items:center;justify-content:space-between;margin-top:16px;}
+.footer-l{font-size:12px;color:rgba(255,255,255,.5);font-family:'Noto Serif JP',serif;}
+.footer-r{font-size:10px;color:rgba(255,255,255,.3);}
+
+@media(max-width:768px){
+  .page-hero{padding:24px 20px;}
+  .main{padding:0 20px;}
+  .item-grid{grid-template-columns:1fr;}
+  .related-grid{grid-template-columns:1fr;}
+  nav{display:none;}
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <a class="logo" href="stylekobo_portal_v4.html">
+    <div class="logo-mark">工</div>
+    <div>
+      <div class="logo-name">スタイル工房</div>
+      <div class="logo-tag">STAFF PORTAL</div>
+    </div>
+  </a>
+  <nav>
+    <a href="stylekobo_portal_v4.html">ホーム</a>
+    <a href="#">資料・規程</a>
+    <a href="#">申請・手続き</a>
+    <a href="#">拠点情報</a>
+    <a href="#">お問い合わせ</a>
+  </nav>
+</header>
+
+<!-- BREADCRUMB -->
+<div class="breadcrumb">
+  <a href="stylekobo_portal_v4.html">ホーム</a>
+  <span>›</span>
+  <span>基本情報・社内ポータル系</span>
+</div>
+
+<!-- PAGE HERO -->
+<div class="page-hero">
+  <div class="page-hero-inner">
+    <div class="page-hero-icon">🏢</div>
+    <div>
+      <div class="page-hero-ttl">基本情報・社内ポータル系</div>
+      <div class="page-hero-sub">
+        社員一覧・拠点情報・部署別問い合わせ先など、<br>
+        スタイル工房で働くうえで必要な基本情報をまとめています。
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+  <div class="sec-label">このカテゴリに含まれるコンテンツ</div>
+  <div class="item-grid">
+
+    <!-- ① 社員情報 -->
+    <a class="item-card" href="staff_directory.html">
+      <div class="item-card-top ic-teal">
+        👥
+        <span class="item-card-badge">公開中</span>
+      </div>
+      <div class="item-card-body">
+        <div class="item-card-name">社員情報</div>
+        <div class="item-card-desc">
+          全社員の一覧・連絡先・担当領域を確認できます。<br>
+          部署・拠点・職種で絞り込んで検索できます。
+        </div>
+        <div class="item-card-tags">
+          <span class="itag">社員一覧</span>
+          <span class="itag">連絡先</span>
+          <span class="itag">部署別</span>
+          <span class="itag">拠点別</span>
+        </div>
+        <div class="item-card-cta">社員一覧を見る →</div>
+      </div>
+    </a>
+
+    <!-- ② 部署別問い合わせ先 -->
+    <a class="item-card" href="https://docs.google.com/presentation/d/1yV-YfVda97-A443UgZvJDZyEtcSx6bJ0/preview" target="_blank" rel="noopener">
+      <div class="item-card-top ic-blue">
+        📞
+        <span class="item-card-badge">公開中</span>
+      </div>
+      <div class="item-card-body">
+        <div class="item-card-name">部署別問い合わせ先一覧</div>
+        <div class="item-card-desc">
+          「誰に何を相談すればいいか」が一覧で分かります。<br>
+          8部署の担当者・役割・連絡先を掲載しています。
+        </div>
+        <div class="item-card-tags">
+          <span class="itag">管理部</span>
+          <span class="itag">設計部</span>
+          <span class="itag">工事部</span>
+          <span class="itag">CS部</span>
+        </div>
+        <div class="item-card-cta">問い合わせ先を確認する →</div>
+      </div>
+    </a>
+
+    <!-- ③ 拠点情報 -->
+    <a class="item-card" href="#">
+      <div class="item-card-top ic-green">
+        🗺️
+        <span class="item-card-badge soon">準備中</span>
+      </div>
+      <div class="item-card-body">
+        <div class="item-card-name">拠点情報</div>
+        <div class="item-card-desc">
+          浜田山店・南青山店・横浜店の所在地・<br>
+          営業時間・アクセスを確認できます。
+        </div>
+        <div class="item-card-tags">
+          <span class="itag">浜田山</span>
+          <span class="itag">南青山</span>
+          <span class="itag">横浜</span>
+        </div>
+        <div class="item-card-cta disabled">準備中</div>
+      </div>
+    </a>
+
+    <!-- ④ 組織図 -->
+    <a class="item-card" href="https://docs.google.com/presentation/d/1pE3yy5Y9hoWKx60HLA5uBTizgkrsg_xi/preview" target="_blank" rel="noopener">
+      <div class="item-card-top ic-gold">
+        📊
+        <span class="item-card-badge">公開中</span>
+      </div>
+      <div class="item-card-body">
+        <div class="item-card-name">組織図・部署別役割整理表</div>
+        <div class="item-card-desc">
+          会社全体の組織構造・各部署の役割と<br>
+          相談先・責任者が確認できます。
+        </div>
+        <div class="item-card-tags">
+          <span class="itag">組織図</span>
+          <span class="itag">役割整理</span>
+          <span class="itag">責任者</span>
+        </div>
+        <div class="item-card-cta">組織図を見る →</div>
+      </div>
+    </a>
+
+    <!-- ⑤ 会社概要 -->
+    <a class="item-card" href="#">
+      <div class="item-card-top ic-purple">
+        🏗️
+        <span class="item-card-badge soon">準備中</span>
+      </div>
+      <div class="item-card-body">
+        <div class="item-card-name">会社概要</div>
+        <div class="item-card-desc">
+          スタイル工房の設立・事業内容・許認可情報・<br>
+          グループ会社など基本情報をまとめています。
+        </div>
+        <div class="item-card-tags">
+          <span class="itag">設立情報</span>
+          <span class="itag">許認可</span>
+          <span class="itag">事業内容</span>
+        </div>
+        <div class="item-card-cta disabled">準備中</div>
+      </div>
+    </a>
+
+    <!-- ⑥ 緊急連絡網（ショートカット） -->
+    <a class="item-card" href="https://docs.google.com/presentation/d/1q9jluIU2Ctbu4I5c1nfafvUUIKYThC9w/preview" target="_blank" rel="noopener">
+      <div class="item-card-top ic-red">
+        🚨
+        <span class="item-card-badge">公開中</span>
+      </div>
+      <div class="item-card-body">
+        <div class="item-card-name">緊急連絡網</div>
+        <div class="item-card-desc">
+          緊急時の連絡フロー・各拠点の連絡先・<br>
+          第一報の報告書フォーマットを掲載しています。
+        </div>
+        <div class="item-card-tags">
+          <span class="itag">火災・事故</span>
+          <span class="itag">クレーム</span>
+          <span class="itag">緊急フロー</span>
+        </div>
+        <div class="item-card-cta">緊急連絡網を確認する →</div>
+      </div>
+    </a>
+
+  </div>
+
+  <!-- 関連リンク -->
+  <div class="sec-label">関連ページ</div>
+  <div class="related-grid">
+    <a class="related-card" href="stylekobo_portal_v4.html#megane" onclick="window.location.href='stylekobo_portal_v4.html';setTimeout(()=>{},500);return false;" onclick="window.location='stylekobo_portal_v4.html'">
+      <span class="related-icon">📮</span>
+      <div class="related-body">
+        <div class="related-name">目安箱</div>
+        <div class="related-desc">改善提案・困っていること、なんでも匿名で投稿できます</div>
+      </div>
+      <span class="related-arr">›</span>
+    </a>
+    <a class="related-card" href="https://docs.google.com/presentation/d/1no5hVMg3eJoVghWdloX5KHo8s7NVLViQ/preview" target="_blank" rel="noopener">
+      <span class="related-icon">🏗</span>
+      <div class="related-body">
+        <div class="related-name">業務フロー標準書</div>
+        <div class="related-desc">リノベーション業務42ステップの標準フロー</div>
+      </div>
+      <span class="related-arr">›</span>
+    </a>
+    <a class="related-card" href="https://docs.google.com/presentation/d/19TGnuLQwWH5U5YX7ZLHHK5Ox2Ni9UJu6/preview" target="_blank" rel="noopener">
+      <span class="related-icon">💬</span>
+      <div class="related-body">
+        <div class="related-name">顧客対応ガイドライン</div>
+        <div class="related-desc">お客様対応の基本・クレーム対応フロー</div>
+      </div>
+      <span class="related-arr">›</span>
+    </a>
+    <a class="related-card" href="stylekobo_portal_v4.html">
+      <span class="related-icon">🏠</span>
+      <div class="related-body">
+        <div class="related-name">ポータルトップに戻る</div>
+        <div class="related-desc">全カテゴリの一覧・よく使うリンクはトップから</div>
+      </div>
+      <span class="related-arr">›</span>
+    </a>
+  </div>
+
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-l">スタイル工房 スタッフポータル</div>
+  <div class="footer-r">© 2026 Style Kobo Co., Ltd. — 社内限定</div>
+</footer>
+
+</body>
+</html>
