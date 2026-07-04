@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>スタイル工房 スタッフポータル</title>
+<!-- Drive links embedded v4 -->
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=Noto+Serif+JP:wght@400;700&display=swap" rel="stylesheet">
+<style>
+/* ===================== TOKENS ===================== */
+:root {
+  --g900: #1E3829;
+  --g800: #2C5040;
+  --g700: #3D6B4F;
+  --g600: #5A9070;
+  --g200: #C8E0D0;
+  --g100: #EEF5F1;
+  --sand: #F5F0E8;
+  --warm: #E8DDD0;
+  --dark: #1A1A1A;
+  --text: #333;
+  --sub:  #666;
+  --muted:#999;
+  --white:#FFF;
+  --red:  #C0392B;
+  --red-l:#FDECEA;
+  --orange:#C0602B;
+  --or-l: #FEF3EC;
+  --blue: #2C5F8A;
+  --bl-l: #E8F0FB;
+  --gold: #9A7B2F;
+  --go-l: #FDF5E0;
+  --teal: #1A7A6E;
+  --te-l: #E6F4F2;
+  --pur:  #5C3A8A;
+  --pu-l: #F0EBF8;
+  --r:    10px;
+  --r-lg: 16px;
+  --sh:   0 2px 16px rgba(0,0,0,0.07);
+  --sh-hover: 0 6px 28px rgba(0,0,0,0.13);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Noto Sans JP',sans-serif;background:#F2EEE8;color:var(--text);min-height:100vh;}
+
+/* ===================== HEADER ===================== */
+header{
+  background:var(--g800);
+  height:56px;padding:0 32px;
+  display:flex;align-items:center;justify-content:space-between;
+  position:sticky;top:0;z-index:200;
+  box-shadow:0 2px 12px rgba(0,0,0,0.18);
+}
+.logo{display:flex;align-items:center;gap:10px;text-decoration:none;}
+.logo-mark{
+  width:32px;height:32px;border-radius:8px;
+  background:rgba(255,255,255,0.18);
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Noto Serif JP',serif;font-size:14px;font-weight:700;color:#fff;
+}
+.logo-text{display:flex;flex-direction:column;}
+.logo-name{font-size:14px;font-weight:700;color:#fff;letter-spacing:.05em;line-height:1;}
+.logo-tag{font-size:9px;color:rgba(255,255,255,.55);letter-spacing:.12em;margin-top:2px;}
+nav{display:flex;align-items:center;gap:2px;}
+nav a{
+  color:rgba(255,255,255,.75);font-size:12px;
+  padding:6px 13px;border-radius:20px;
+  text-decoration:none;transition:all .18s;
+}
+nav a:hover{background:rgba(255,255,255,.14);color:#fff;}
+
+/* 目安箱フローティングボタン */
+.megane-float{
+  position:fixed;bottom:28px;right:28px;z-index:300;
+}
+.megane-btn{
+  background:linear-gradient(135deg,var(--gold) 0%,#C49A3C 100%);
+  color:#fff;border:none;border-radius:50px;
+  padding:14px 22px;
+  display:flex;align-items:center;gap:10px;
+  font-family:'Noto Sans JP',sans-serif;font-size:13px;font-weight:700;
+  cursor:pointer;
+  box-shadow:0 4px 20px rgba(154,123,47,.45);
+  transition:all .22s;
+  text-decoration:none;
+}
+.megane-btn:hover{transform:translateY(-3px);box-shadow:0 8px 30px rgba(154,123,47,.55);}
+.megane-btn svg{width:20px;height:20px;flex-shrink:0;}
+.megane-pulse{
+  position:absolute;top:-3px;right:-3px;
+  width:12px;height:12px;border-radius:50%;
+  background:var(--red);
+  animation:pulse 2s infinite;
+}
+@keyframes pulse{
+  0%,100%{box-shadow:0 0 0 0 rgba(192,57,43,.6);}
+  50%{box-shadow:0 0 0 7px rgba(192,57,43,0);}
+}
+
+/* ===================== HERO ===================== */
+.hero{
+  background:linear-gradient(115deg,var(--g900) 0%,var(--g800) 50%,var(--g700) 100%);
+  padding:40px 40px 44px;
+  position:relative;overflow:hidden;
+}
+.hero::before{
+  content:'';position:absolute;
+  right:-60px;top:-60px;
+  width:320px;height:320px;border-radius:50%;
+  background:rgba(255,255,255,.04);
+}
+.hero::after{
+  content:'';position:absolute;
+  right:60px;bottom:-80px;
+  width:200px;height:200px;border-radius:50%;
+  background:rgba(255,255,255,.03);
+}
+.hero-inner{max-width:1120px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:24px;position:relative;}
+.hero-left h1{
+  font-family:'Noto Serif JP',serif;
+  font-size:24px;color:#fff;line-height:1.6;margin-bottom:8px;
+}
+.hero-left p{font-size:12px;color:rgba(255,255,255,.65);line-height:1.7;}
+.hero-chips{display:flex;gap:12px;flex-shrink:0;}
+.chip{
+  background:rgba(255,255,255,.12);
+  border:1px solid rgba(255,255,255,.2);
+  border-radius:12px;padding:14px 22px;
+  text-align:center;min-width:88px;
+}
+.chip-n{font-size:26px;font-weight:700;color:#fff;line-height:1;}
+.chip-l{font-size:10px;color:rgba(255,255,255,.65);margin-top:4px;}
+
+/* ===================== TICKER ===================== */
+.ticker{
+  background:#fff;border-bottom:1px solid var(--warm);
+  padding:9px 32px;
+  display:flex;align-items:center;gap:12px;overflow:hidden;
+}
+.ticker-tag{
+  background:var(--red);color:#fff;
+  font-size:10px;font-weight:700;
+  padding:2px 10px;border-radius:4px;white-space:nowrap;flex-shrink:0;
+}
+.ticker-track{
+  font-size:12px;color:var(--muted);white-space:nowrap;
+  animation:ticker 38s linear infinite;
+}
+@keyframes ticker{0%{transform:translateX(0);}100%{transform:translateX(-50%);}}
+
+/* ===================== LAYOUT ===================== */
+.page{max-width:1120px;margin:0 auto;padding:32px 40px;display:grid;grid-template-columns:1fr 268px;gap:24px;}
+.sec-label{
+  font-size:10px;font-weight:700;color:var(--muted);
+  letter-spacing:.18em;text-transform:uppercase;
+  display:flex;align-items:center;gap:8px;
+  margin-bottom:14px;
+}
+.sec-label::after{content:'';flex:1;height:1px;background:var(--warm);}
+
+/* ===================== QUICK LINKS ===================== */
+.quick{display:grid;grid-template-columns:repeat(6,1fr);gap:9px;margin-bottom:30px;}
+.q-btn{
+  background:#fff;border:1px solid var(--warm);border-radius:var(--r);
+  padding:14px 6px 12px;text-align:center;
+  text-decoration:none;display:flex;flex-direction:column;align-items:center;gap:7px;
+  transition:all .2s;cursor:pointer;
+}
+.q-btn:hover{border-color:var(--g600);box-shadow:var(--sh-hover);transform:translateY(-3px);}
+.q-icon{
+  width:40px;height:40px;border-radius:10px;
+  display:flex;align-items:center;justify-content:center;font-size:20px;
+}
+.q-label{font-size:10px;font-weight:700;color:var(--dark);line-height:1.3;}
+
+/* ===================== 目安箱バナー ===================== */
+.megane-banner{
+  background:linear-gradient(110deg,#7B5C1A 0%,var(--gold) 60%,#C49A3C 100%);
+  border-radius:var(--r-lg);padding:20px 26px;
+  display:flex;align-items:center;justify-content:space-between;gap:16px;
+  margin-bottom:30px;cursor:pointer;
+  box-shadow:0 4px 20px rgba(154,123,47,.3);
+  transition:all .22s;text-decoration:none;
+}
+.megane-banner:hover{transform:translateY(-2px);box-shadow:0 8px 32px rgba(154,123,47,.4);}
+.megane-banner-left{display:flex;align-items:center;gap:16px;}
+.megane-icon-wrap{
+  width:52px;height:52px;border-radius:14px;
+  background:rgba(255,255,255,.18);
+  display:flex;align-items:center;justify-content:center;
+  font-size:28px;flex-shrink:0;
+}
+.megane-banner-text h3{font-size:16px;font-weight:700;color:#fff;margin-bottom:3px;}
+.megane-banner-text p{font-size:11px;color:rgba(255,255,255,.78);line-height:1.5;}
+.megane-banner-cta{
+  background:rgba(255,255,255,.95);color:var(--gold);
+  font-size:12px;font-weight:700;
+  padding:10px 20px;border-radius:50px;
+  white-space:nowrap;flex-shrink:0;
+  transition:background .18s;
+}
+.megane-banner:hover .megane-banner-cta{background:#fff;}
+
+/* ===================== DOC CATEGORIES ===================== */
+.cat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:11px;margin-bottom:28px;}
+.cat-card{
+  background:#fff;border:1.5px solid var(--warm);border-radius:var(--r);
+  overflow:hidden;text-decoration:none;display:block;
+  transition:all .2s;
+}
+.cat-card:hover{border-color:var(--g600);box-shadow:var(--sh-hover);transform:translateY(-3px);}
+.cat-head{height:68px;display:flex;align-items:center;justify-content:center;position:relative;font-size:30px;}
+.cat-badge{
+  position:absolute;top:7px;right:7px;
+  background:rgba(255,255,255,.88);
+  font-size:8px;font-weight:700;color:var(--sub);
+  padding:1px 7px;border-radius:10px;
+}
+.cat-ready{
+  position:absolute;bottom:6px;left:7px;
+  background:var(--g700);
+  font-size:8px;font-weight:700;color:#fff;
+  padding:1px 7px;border-radius:10px;
+}
+.cat-body{padding:11px 13px;}
+.cat-name{font-size:11px;font-weight:700;color:var(--dark);margin-bottom:2px;}
+.cat-desc{font-size:9.5px;color:var(--muted);line-height:1.5;}
+
+/* category bg colors */
+.cb1{background:#E9F4ED;} .cb2{background:#FFF2E5;}
+.cb3{background:#E7EFF9;} .cb4{background:#F2EAF7;}
+.cb5{background:#FAEEe8;} .cb6{background:#E5F4F1;}
+.cb7{background:#FAE6EE;} .cb8{background:#FCF9E2;}
+.cb9{background:#ECEAF7;} .cb10{background:#ECF8EB;}
+.cb11{background:#E7EBF8;} .cb12{background:#FCEEE6;}
+.cb13{background:#EFE9E6;} .cb14{background:#E5F7FA;}
+
+/* ===================== SIDEBAR ===================== */
+.sidebar{display:flex;flex-direction:column;gap:16px;}
+.side-box{background:#fff;border:1px solid var(--warm);border-radius:var(--r);padding:16px;}
+.side-ttl{
+  font-size:12px;font-weight:700;color:var(--dark);
+  padding-bottom:10px;margin-bottom:12px;
+  border-bottom:1px solid var(--warm);
+  display:flex;align-items:center;gap:7px;
+}
+
+/* お知らせ */
+.notice{padding:8px 0;border-bottom:1px solid #F0EAE3;display:flex;flex-direction:column;gap:4px;cursor:pointer;}
+.notice:last-child{border:none;padding-bottom:0;}
+.n-meta{display:flex;align-items:center;gap:6px;}
+.n-date{font-size:10px;color:var(--muted);}
+.ntag{font-size:8.5px;font-weight:700;padding:1px 6px;border-radius:3px;}
+.ntag-new{background:#FEE2E2;color:var(--red);}
+.ntag-info{background:#DBEAFE;color:var(--blue);}
+.ntag-upd{background:#D1FAE5;color:#065F46;}
+.n-text{font-size:11px;color:var(--text);line-height:1.45;}
+
+/* 拠点 */
+.branch{
+  padding:9px 10px;background:#F7F3EE;border-radius:7px;
+  margin-bottom:7px;cursor:pointer;transition:background .15s;
+}
+.branch:last-child{margin-bottom:0;}
+.branch:hover{background:var(--g100);}
+.branch-name{font-size:11px;font-weight:700;color:var(--dark);margin-bottom:1px;}
+.branch-info{font-size:9.5px;color:var(--muted);}
+
+/* 問い合わせ */
+.contact-row{
+  display:flex;align-items:center;gap:10px;
+  padding:8px 0;border-bottom:1px solid #F0EAE3;cursor:pointer;
+}
+.contact-row:last-child{border:none;}
+.c-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.c-info{display:flex;flex-direction:column;gap:1px;}
+.c-dept{font-size:9.5px;color:var(--muted);}
+.c-name{font-size:11px;font-weight:700;color:var(--dark);}
+.c-role{font-size:9.5px;color:var(--g700);}
+
+/* 目安箱 mini（サイドバー） */
+.megane-side{
+  background:linear-gradient(135deg,#7B5C1A,var(--gold));
+  border-radius:var(--r);padding:14px 16px;
+  display:flex;flex-direction:column;align-items:center;gap:8px;
+  cursor:pointer;text-decoration:none;transition:opacity .2s;
+}
+.megane-side:hover{opacity:.9;}
+.megane-side-icon{font-size:32px;line-height:1;}
+.megane-side-ttl{font-size:13px;font-weight:700;color:#fff;}
+.megane-side-sub{font-size:10px;color:rgba(255,255,255,.78);text-align:center;line-height:1.5;}
+.megane-side-cta{
+  background:rgba(255,255,255,.92);color:var(--gold);
+  font-size:11px;font-weight:700;
+  padding:7px 18px;border-radius:20px;margin-top:2px;
+}
+
+/* ===================== 目安箱モーダル ===================== */
+.modal-overlay{
+  display:none;position:fixed;inset:0;
+  background:rgba(0,0,0,.55);z-index:400;
+  align-items:center;justify-content:center;
+  backdrop-filter:blur(3px);
+}
+.modal-overlay.open{display:flex;}
+.modal{
+  background:#fff;border-radius:20px;
+  width:min(560px,90vw);max-height:90vh;overflow-y:auto;
+  padding:36px;position:relative;
+  box-shadow:0 24px 80px rgba(0,0,0,.25);
+  animation:modalIn .25s ease;
+}
+@keyframes modalIn{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:none;}}
+.modal-close{
+  position:absolute;top:16px;right:16px;
+  width:32px;height:32px;border-radius:50%;
+  background:#F0EDE8;border:none;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  font-size:16px;color:var(--sub);transition:background .15s;
+}
+.modal-close:hover{background:var(--warm);}
+.modal-head{display:flex;align-items:center;gap:14px;margin-bottom:20px;}
+.modal-head-icon{
+  width:52px;height:52px;border-radius:14px;
+  background:linear-gradient(135deg,#7B5C1A,var(--gold));
+  display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0;
+}
+.modal-head h2{font-size:20px;font-weight:700;color:var(--dark);margin-bottom:3px;}
+.modal-head p{font-size:12px;color:var(--sub);}
+.modal form{display:flex;flex-direction:column;gap:16px;}
+.f-label{font-size:12px;font-weight:700;color:var(--dark);margin-bottom:5px;display:block;}
+.f-note{font-size:10.5px;color:var(--muted);margin-top:3px;}
+.f-select,.f-input,.f-textarea{
+  width:100%;border:1.5px solid var(--warm);border-radius:8px;
+  padding:10px 13px;font-family:'Noto Sans JP',sans-serif;
+  font-size:13px;color:var(--text);background:#FDFAF7;
+  transition:border .18s;outline:none;
+}
+.f-select:focus,.f-input:focus,.f-textarea:focus{border-color:var(--g600);background:#fff;}
+.f-textarea{resize:vertical;min-height:100px;line-height:1.6;}
+.f-anon{
+  display:flex;align-items:center;gap:8px;
+  background:var(--g100);border-radius:8px;padding:10px 13px;cursor:pointer;
+}
+.f-anon input{width:16px;height:16px;accent-color:var(--g700);cursor:pointer;}
+.f-anon-text{font-size:12px;color:var(--dark);}
+.f-anon-sub{font-size:10px;color:var(--sub);}
+.f-submit{
+  background:linear-gradient(135deg,var(--g800),var(--g700));
+  color:#fff;border:none;border-radius:50px;
+  padding:14px;font-family:'Noto Sans JP',sans-serif;
+  font-size:14px;font-weight:700;cursor:pointer;
+  transition:all .2s;
+}
+.f-submit:hover{opacity:.88;transform:translateY(-1px);}
+.f-privacy{font-size:10px;color:var(--muted);text-align:center;line-height:1.6;}
+.f-sent{
+  display:none;flex-direction:column;align-items:center;gap:12px;
+  padding:20px 0;text-align:center;
+}
+.f-sent.show{display:flex;}
+.f-sent-icon{font-size:48px;}
+.f-sent h3{font-size:18px;font-weight:700;color:var(--g700);}
+.f-sent p{font-size:12px;color:var(--sub);line-height:1.7;}
+
+/* ===================== FOOTER ===================== */
+footer{
+  background:var(--g900);
+  padding:20px 40px;
+  display:flex;align-items:center;justify-content:space-between;
+  margin-top:16px;
+}
+.footer-l{font-size:12px;color:rgba(255,255,255,.5);font-family:'Noto Serif JP',serif;}
+.footer-r{font-size:10px;color:rgba(255,255,255,.3);}
+
+/* ===================== UTILITIES ===================== */
+@media(max-width:800px){
+  .page{grid-template-columns:1fr;padding:20px;}
+  .quick{grid-template-columns:repeat(3,1fr);}
+  .cat-grid{grid-template-columns:repeat(2,1fr);}
+  .hero-chips{display:none;}
+  .megane-float{bottom:16px;right:16px;}
+}
+</style>
+</head>
+<body>
+
+<!-- ===== HEADER ===== -->
+<header>
+  <a class="logo" href="#">
+    <div class="logo-mark">工</div>
+    <div class="logo-text">
+      <div class="logo-name">スタイル工房</div>
+      <div class="logo-tag">STAFF PORTAL</div>
+    </div>
+  </a>
+  <nav>
+    <a href="#">ホーム</a>
+    <a href="https://drive.google.com/drive/folders/19EwYPSN1nhn-dSEOjJ7vAWrYVhg0oYdH" target="_blank" rel="noopener">資料・規程</a>
+    <a href="#">申請・手続き</a>
+    <a href="#">拠点情報</a>
+    <a href="#" onclick="openMegane();return false;">📮 目安箱</a>
+  </nav>
+</header>
+
+<!-- ===== HERO ===== -->
+<div class="hero">
+  <div class="hero-inner">
+    <div class="hero-left">
+      <h1>物のカタチを変え、人の気持ちも変える<br>しあわせづくり</h1>
+      <p>スタイル工房 スタッフポータル ― 困ったときはここから探してください</p>
+    </div>
+    <div class="hero-chips">
+      <div class="chip"><div class="chip-n">3</div><div class="chip-l">拠点</div></div>
+      <div class="chip"><div class="chip-n">50</div><div class="chip-l">スタッフ</div></div>
+      <div class="chip"><div class="chip-n">14</div><div class="chip-l">カテゴリ</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== TICKER ===== -->
+<div class="ticker">
+  <span class="ticker-tag">お知らせ</span>
+  <span class="ticker-track">
+    【6/27】社内ポータルをリニューアルしました　／　【6/27】部署別問い合わせ先一覧を公開しました　／　【6/27】緊急連絡網フォーマットを公開しました　／　【6/1】夏季休暇のご案内を掲載しました　／　【5/28】社内連絡先一覧を更新しました　／　【6/27】社内ポータルをリニューアルしました　／　【6/27】部署別問い合わせ先一覧を公開しました　／　【6/27】緊急連絡網フォーマットを公開しました　／　【6/1】夏季休暇のご案内を掲載しました　／　【5/28】社内連絡先一覧を更新しました
+  </span>
+</div>
+
+<!-- ===== MAIN ===== -->
+<div class="page">
+<div class="content">
+
+  <!-- よく使うリンク -->
+  <div class="sec-label">よく使うリンク</div>
+  <div class="quick">
+    <a class="q-btn" href="#">
+      <div class="q-icon" style="background:#E9F4ED;">📋</div>
+      <div class="q-label">就業規則</div>
+    </a>
+    <a class="q-btn" href="#">
+      <div class="q-icon" style="background:#E7EFF9;">📅</div>
+      <div class="q-label">休暇・勤怠申請</div>
+    </a>
+    <a class="q-btn" href="#">
+      <div class="q-icon" style="background:#FFF2E5;">💰</div>
+      <div class="q-label">経費精算</div>
+    </a>
+    <a class="q-btn" href="basic_info.html">
+      <div class="q-icon" style="background:#E5F4F1;">📞</div>
+      <div class="q-label">社員連絡先</div>
+    </a>
+    <a class="q-btn" href="https://docs.google.com/presentation/d/1q9jluIU2Ctbu4I5c1nfafvUUIKYThC9w/preview" target="_blank" rel="noopener">
+      <div class="q-icon" style="background:#FCEEE6;">🚨</div>
+      <div class="q-label">緊急連絡網</div>
+    </a>
+    <a class="q-btn" href="#" onclick="openMegane();return false;">
+      <div class="q-icon" style="background:#FDF5E0;">📮</div>
+      <div class="q-label">目安箱</div>
+    </a>
+  </div>
+
+  <!-- 目安箱バナー -->
+  <a class="megane-banner" href="#" onclick="openMegane();return false;">
+    <div class="megane-banner-left">
+      <div class="megane-icon-wrap">📮</div>
+      <div class="megane-banner-text">
+        <h3>目安箱 ― あなたの声を聞かせてください</h3>
+        <p>改善提案・気になること・困っていること、なんでも大丈夫。匿名でOKです。<br>いただいた声はすべて目を通し、できることから動きます。</p>
+      </div>
+    </div>
+    <div class="megane-banner-cta">投稿する →</div>
+  </a>
+
+  <!-- 資料カテゴリ -->
+  <div class="sec-label">資料・規程カテゴリ</div>
+  <div class="cat-grid">
+
+    <a class="cat-card" href="https://docs.google.com/presentation/d/1hudjx1qK8aayzwg81kUZxroWFsLt728i/preview" target="_blank" rel="noopener">
+      <div class="cat-head cb1">🏛<span class="cat-badge">3件</span><span class="cat-ready">公開中</span></div>
+      <div class="cat-body">
+        <div class="cat-name">会社方針・理念系</div>
+        <div class="cat-desc">MVV／行動指針／アドバイザー役割定義書</div>
+      </div>
+    </a>
+
+    <a class="cat-card" href="basic_info.html">
+      <div class="cat-head cb14">🏢<span class="cat-badge">5件</span><span class="cat-ready">公開中</span></div>
+      <div class="cat-body">
+        <div class="cat-name">基本情報・社内ポータル系</div>
+        <div class="cat-desc">社員一覧・部署別問い合わせ先・拠点情報 他</div>
+      </div>
+    </a>
+
+    <a class="cat-card" href="#">
+      <div class="cat-head cb2">📋<span class="cat-badge">5件</span></div>
+      <div class="cat-body">
+        <div class="cat-name">労務・人事規程系</div>
+        <div class="cat-desc">就業規則／賃金規程／育児介護規程 他</div>
+      </div>
+    </a>
+
+    <a class="cat-card" href="#">
+      <div class="cat-head cb3">📅<span class="cat-badge">1件</span></div>
+      <div class="cat-body">
+        <div class="cat-name">勤怠・休暇系</div>
+        <div class="cat-desc">出退勤・残業申請・有給取得ルール</div>
+      </div>
+    </a>
+
+    <a class="cat-card" href="#">
+      <div class="cat-head cb4">💰<span class="cat-badge">3件</span></div>
+      <div class="cat-body">
+        <div class="cat-name">申請・経費・決裁系</div>
+        <div class="cat-desc">各種申請フォーム／経費精算／決裁権限表</div>
+      </div>
+    </a>
+
+    <a class="cat-card" href="https://docs.google.com/presentation/d/1no5hVMg3eJoVghWdloX5KHo8s7NVLViQ/preview" target="_blank" rel="noopener">
+      <div class="cat-head cb5">🏗<span class="cat-badge">2件</span><span class="cat-ready">公開中</span></div>
+      <div class="cat-body">
+        <div class="cat-name">業務標準・事業フロー系</div>
+        <div class="cat-desc">リノベ業務フロー標準書／変更管理ルール</div>
+      </div>
+    </a>
+
+    <a class="cat-card" href="https://docs.google.com/presentation/d/19TGnuLQwWH5U5YX7ZLHHK5Ox2Ni9UJu6/preview" target="_blank" rel="noopener">
+      <div class="cat-head cb6">💬<span class="cat-badge">2件</span><span class="cat-ready">公開中</span></div>
+      <div class="cat-body">
+        <div class="cat-name">顧客対応・クレーム系</div>
+        <div class="cat-desc">顧客対応ガイドライン／クレーム対応フロー</div>
+      </div>
+    </a>
+
+    <a class="cat-card" href="#">
+      <div class="cat-head cb7">🔐<span class="cat-badge">4件</span></div>
+      <div class="cat-body">
+        <div class="cat-name">情報セキュリティ系</div>
+        <div class="cat-desc">個人情報保護規程／セキュリティ規程 他</div>
+      </div>
+    </a>
+
+    <a class="cat-card" href="#">
+      <div class="cat-head cb8">🎨<span class="cat-badge">1件</span></div>
+      <div class="cat-body">
+        <div class="cat-name">広報・ブランド系</div>
+        <div class="cat-desc">ブランドガイドライン</div>
+      </div>
+    </a>
+
+    <a class="cat-card" href="#">
+      <div class="cat-head cb9">📚<span class="cat-badge">5件</span></div>
+      <div class="cat-body">
+        <div class="cat-name">教育・研修系</div>
+        <div class="cat-desc">オンボーディング／育成キャリアパス 他</div>
+      </div>
+    </a>
+
+    <a class="cat-card" href="#">
+      <div class="cat-head cb10">🎁<span class="cat-badge">1件</span></div>
+      <div class="cat-body">
+        <div class="cat-name">福利厚生系</div>
+        <div class="cat-desc">健康診断・慶弔見舞金・資格支援一覧</div>
+      </div>
+    </a>
+
+    <a class="cat-card" href="#">
+      <div class="cat-head cb11">📖<span class="cat-badge">1件</span></div>
+      <div class="cat-body">
+        <div class="cat-name">社員向け総合案内系</div>
+        <div class="cat-desc">社員ハンドブック</div>
+      </div>
+    </a>
+
+    <a class="cat-card" href="https://docs.google.com/presentation/d/1q9jluIU2Ctbu4I5c1nfafvUUIKYThC9w/preview" target="_blank" rel="noopener">
+      <div class="cat-head cb12">🚨<span class="cat-badge">4件</span><span class="cat-ready">公開中</span></div>
+      <div class="cat-body">
+        <div class="cat-name">非常時対応系</div>
+        <div class="cat-desc">緊急連絡網／災害対応／現場事故フロー 他</div>
+      </div>
+    </a>
+
+    <a class="cat-card" href="https://docs.google.com/presentation/d/1pE3yy5Y9hoWKx60HLA5uBTizgkrsg_xi/preview" target="_blank" rel="noopener">
+      <div class="cat-head cb13">⚖️<span class="cat-badge">3件</span><span class="cat-ready">公開中</span></div>
+      <div class="cat-body">
+        <div class="cat-name">許認可・法令系</div>
+        <div class="cat-desc">組織図・役割分担表／関連法令一覧 他</div>
+      </div>
+    </a>
+
+
+  </div>
+</div>
+
+<!-- ===== SIDEBAR ===== -->
+<aside class="sidebar">
+
+  <!-- 目安箱（サイドバー） -->
+  <a class="megane-side" href="#" onclick="openMegane();return false;">
+    <div class="megane-side-icon">📮</div>
+    <div class="megane-side-ttl">目安箱</div>
+    <div class="megane-side-sub">改善提案・困っていること<br>なんでも匿名で投稿できます</div>
+    <div class="megane-side-cta">声を届ける →</div>
+  </a>
+
+  <!-- お知らせ -->
+  <div class="side-box">
+    <div class="side-ttl">📣 お知らせ</div>
+    <div class="notice">
+      <div class="n-meta"><span class="n-date">6/27</span><span class="ntag ntag-new">NEW</span></div>
+      <div class="n-text">ポータルをリニューアルしました</div>
+    </div>
+    <div class="notice">
+      <div class="n-meta"><span class="n-date">6/27</span><span class="ntag ntag-new">NEW</span></div>
+      <div class="n-text">部署別問い合わせ先一覧を公開</div>
+    </div>
+    <div class="notice">
+      <div class="n-meta"><span class="n-date">6/27</span><span class="ntag ntag-new">NEW</span></div>
+      <div class="n-text">緊急連絡網フォーマットを公開</div>
+    </div>
+    <div class="notice">
+      <div class="n-meta"><span class="n-date">6/1</span><span class="ntag ntag-info">INFO</span></div>
+      <div class="n-text">2026年夏季休暇のご案内</div>
+    </div>
+    <div class="notice">
+      <div class="n-meta"><span class="n-date">5/28</span><span class="ntag ntag-upd">更新</span></div>
+      <div class="n-text">社内連絡先一覧を更新しました</div>
+    </div>
+  </div>
+
+  <!-- 拠点一覧 -->
+  <div class="side-box">
+    <div class="side-ttl">📍 拠点一覧</div>
+    <div class="branch">
+      <div class="branch-name">🏠 浜田山店</div>
+      <div class="branch-info">東京都杉並区　10:00〜18:00</div>
+    </div>
+    <div class="branch">
+      <div class="branch-name">🏢 南青山店</div>
+      <div class="branch-info">東京都港区　10:00〜18:00</div>
+    </div>
+    <div class="branch">
+      <div class="branch-name">🏪 横浜店</div>
+      <div class="branch-info">神奈川県横浜市　10:00〜18:00</div>
+    </div>
+  </div>
+
+  <!-- 部署別問い合わせ -->
+  <div class="side-box">
+    <div class="side-ttl">📞 部署別問い合わせ先</div>
+    <div class="contact-row">
+      <div class="c-dot" style="background:var(--blue);"></div>
+      <div class="c-info">
+        <div class="c-dept">総務・管理</div>
+        <div class="c-name">管理部（志摩 / 中野）</div>
+        <div class="c-role">勤怠・給与・備品・社内手続き</div>
+      </div>
+    </div>
+    <div class="contact-row">
+      <div class="c-dot" style="background:var(--gold);"></div>
+      <div class="c-info">
+        <div class="c-dept">広報・マーケ</div>
+        <div class="c-name">広報部（丹野）</div>
+        <div class="c-role">SNS・取材・撮影・広告</div>
+      </div>
+    </div>
+    <div class="contact-row">
+      <div class="c-dot" style="background:var(--teal);"></div>
+      <div class="c-info">
+        <div class="c-dept">顧客対応</div>
+        <div class="c-name">カスタマーサポート部</div>
+        <div class="c-role">問い合わせ・クレーム対応</div>
+      </div>
+    </div>
+    <div class="contact-row">
+      <div class="c-dot" style="background:var(--g700);"></div>
+      <div class="c-info">
+        <div class="c-dept">設計・プラン</div>
+        <div class="c-name">設計部（高木）</div>
+        <div class="c-role">プランニング・図面</div>
+      </div>
+    </div>
+    <div class="contact-row">
+      <div class="c-dot" style="background:var(--red);"></div>
+      <div class="c-info">
+        <div class="c-dept">工事</div>
+        <div class="c-name">工事本部（保壽 / 清水）</div>
+        <div class="c-role">着工・施工管理・現場対応</div>
+      </div>
+    </div>
+  </div>
+
+</aside>
+</div>
+
+<!-- ===== FOOTER ===== -->
+<footer>
+  <div class="footer-l">スタイル工房 スタッフポータル</div>
+  <div class="footer-r">© 2026 Style Kobo Co., Ltd. — 社内限定</div>
+</footer>
+
+<!-- ===== フローティング目安箱ボタン ===== -->
+<div class="megane-float">
+  <button class="megane-btn" onclick="openMegane()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+      <polyline points="22,6 12,13 2,6"/>
+    </svg>
+    目安箱
+  </button>
+  <div class="megane-pulse"></div>
+</div>
+
+<!-- ===== 目安箱モーダル ===== -->
+<div class="modal-overlay" id="meganeModal" onclick="if(event.target===this)closeMegane()">
+  <div class="modal">
+    <button class="modal-close" onclick="closeMegane()">✕</button>
+
+    <div id="meganeForm">
+      <div class="modal-head">
+        <div class="modal-head-icon">📮</div>
+        <div>
+          <h2>目安箱</h2>
+          <p>あなたの声がスタイル工房をよくします。匿名でOKです。</p>
+        </div>
+      </div>
+
+      <form onsubmit="submitMegane(event)">
+        <div>
+          <label class="f-label" for="cat">カテゴリを選んでください</label>
+          <select class="f-select" id="cat" required>
+            <option value="">── 選択してください ──</option>
+            <option>改善提案（業務・ルール・制度）</option>
+            <option>職場環境・設備について</option>
+            <option>人間関係・コミュニケーション</option>
+            <option>評価・給与・キャリアについて</option>
+            <option>お客様対応について</option>
+            <option>情報共有・連絡について</option>
+            <option>その他・なんでも</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="f-label" for="msg">内容を教えてください</label>
+          <textarea class="f-textarea" id="msg" placeholder="気になっていること、改善してほしいこと、嬉しかったこと、なんでも書いてください。" required></textarea>
+          <div class="f-note">良いことも、困っていることも、どちらも大歓迎です。</div>
+        </div>
+
+        <label class="f-anon">
+          <input type="checkbox" id="anon" checked>
+          <div>
+            <div class="f-anon-text">✅　匿名で送る</div>
+            <div class="f-anon-sub">チェックを外すと名前を記入できます</div>
+          </div>
+        </label>
+
+        <div id="nameWrap" style="display:none;">
+          <label class="f-label" for="sender">お名前（任意）</label>
+          <input class="f-input" id="sender" type="text" placeholder="氏名または拠点名">
+        </div>
+
+        <button class="f-submit" type="submit">送信する</button>
+        <div class="f-privacy">送信内容は担当者のみが確認します。個人を特定した回答は行いません。<br>いただいた声は月1回まとめて共有・検討します。</div>
+      </form>
+    </div>
+
+    <div class="f-sent" id="meganeSent">
+      <div class="f-sent-icon">🎉</div>
+      <h3>ありがとうございました！</h3>
+      <p>あなたの声を受け取りました。<br>いただいた内容は責任を持って確認し、<br>できることから改善していきます。</p>
+      <button class="f-submit" style="max-width:200px;margin-top:8px;" onclick="closeMegane()">閉じる</button>
+    </div>
+  </div>
+</div>
+
+<script>
+function openMegane() {
+  document.getElementById('meganeModal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeMegane() {
+  document.getElementById('meganeModal').classList.remove('open');
+  document.body.style.overflow = '';
+  // フォームをリセット
+  setTimeout(() => {
+    document.getElementById('meganeForm').style.display = 'block';
+    document.getElementById('meganeSent').classList.remove('show');
+    document.getElementById('cat').value = '';
+    document.getElementById('msg').value = '';
+    document.getElementById('anon').checked = true;
+    document.getElementById('nameWrap').style.display = 'none';
+  }, 300);
+}
+function submitMegane(e) {
+  e.preventDefault();
+  document.getElementById('meganeForm').style.display = 'none';
+  document.getElementById('meganeSent').classList.add('show');
+}
+document.getElementById('anon').addEventListener('change', function() {
+  document.getElementById('nameWrap').style.display = this.checked ? 'none' : 'block';
+});
+</script>
+</body>
+</html>
