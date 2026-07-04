@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
-<title>Pink Ribbon Camera – Prototype</title>
+<title>Pink Ribbon Camera – Prototype v2</title>
 <style>
   :root{
     --champagne:#FBF3EF;
@@ -13,163 +13,84 @@
     --rose-text:#7A3B49;
     --glass:rgba(255,255,255,0.28);
     --glass-border:rgba(255,255,255,0.55);
-    --glass-strong:rgba(255,255,255,0.5);
   }
   *{box-sizing:border-box;}
-  html,body{
-    margin:0;padding:0;width:100%;height:100%;
-    background:#000;
-    font-family:-apple-system,"Hiragino Sans","Helvetica Neue",sans-serif;
-    overscroll-behavior:none;
-  }
-  #app{
-    position:fixed;inset:0;
-    overflow:hidden;
-    background:linear-gradient(160deg,#2a1418,#000);
-  }
-  #camera{
-    position:absolute;inset:0;
-    width:100%;height:100%;
-    object-fit:cover;
-    background:#111;
-  }
+  html,body{margin:0;padding:0;width:100%;height:100%;background:#000;
+    font-family:-apple-system,"Hiragino Sans","Helvetica Neue",sans-serif;overscroll-behavior:none;}
+  #app{position:fixed;inset:0;overflow:hidden;background:linear-gradient(160deg,#2a1418,#000);}
+  #camera{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#111;}
   #camera.mirrored{transform:scaleX(-1);}
-  #ribbonCanvas{
-    position:absolute;inset:0;
-    width:100%;height:100%;
-    pointer-events:none;
-    mix-blend-mode:normal;
-  }
-  /* ===== 上部バー ===== */
-  .top-bar{
-    position:absolute;top:0;left:0;right:0;
-    display:flex;align-items:center;justify-content:space-between;
-    padding:calc(env(safe-area-inset-top) + 14px) 18px 10px;
-    z-index:20;
-  }
-  .glass-pill,.glass-icon{
-    background:var(--glass);
-    border:1px solid var(--glass-border);
-    backdrop-filter:blur(18px) saturate(140%);
-    -webkit-backdrop-filter:blur(18px) saturate(140%);
-    color:#fff;
-    box-shadow:0 2px 12px rgba(0,0,0,0.15);
-  }
-  .glass-icon{
-    width:34px;height:34px;border-radius:50%;
-    display:flex;align-items:center;justify-content:center;
-    font-size:15px;
-    transition:transform .15s ease;
-  }
+
+  /* ---- リボン用SVGレイヤー ---- */
+  #ribbonLayer{position:absolute;inset:0;pointer-events:none;z-index:4;overflow:hidden;}
+  .ribbon-svg{position:absolute;left:0;top:0;width:100px;height:150px;
+    transform-origin:50% 50%;overflow:visible;will-change:transform,opacity;}
+  #particlesCanvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:6;}
+
+  /* ---- 上部バー ---- */
+  .top-bar{position:absolute;top:0;left:0;right:0;display:flex;align-items:center;justify-content:space-between;
+    padding:calc(env(safe-area-inset-top) + 14px) 18px 10px;z-index:20;}
+  .glass-pill,.glass-icon{background:var(--glass);border:1px solid var(--glass-border);
+    backdrop-filter:blur(18px) saturate(140%);-webkit-backdrop-filter:blur(18px) saturate(140%);
+    color:#fff;box-shadow:0 2px 12px rgba(0,0,0,0.15);}
+  .glass-icon{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    font-size:15px;transition:transform .15s ease;}
   .glass-icon:active{transform:scale(0.88);}
-  .ratio-pill{
-    padding:6px 16px;border-radius:20px;
-    font-size:12px;letter-spacing:.05em;font-weight:600;
-  }
-  /* ===== フォーカス枠（装飾） ===== */
-  .focus-frame{
-    position:absolute;
-    top:32%;left:14%;right:14%;bottom:30%;
-    pointer-events:none;z-index:5;
-    opacity:.55;
-  }
-  .focus-frame span{
-    position:absolute;width:20px;height:20px;
-    border-color:rgba(255,255,255,.85);
-    border-style:solid;border-width:0;
-  }
+  .ratio-pill{padding:6px 16px;border-radius:20px;font-size:12px;letter-spacing:.05em;font-weight:600;}
+
+  /* ---- フォーカス枠（装飾）---- */
+  .focus-frame{position:absolute;top:32%;left:14%;right:14%;bottom:30%;pointer-events:none;z-index:5;opacity:.55;}
+  .focus-frame span{position:absolute;width:20px;height:20px;border-color:rgba(255,255,255,.85);border-style:solid;border-width:0;}
   .focus-frame .tl{top:0;left:0;border-top-width:1.5px;border-left-width:1.5px;border-top-left-radius:6px;}
   .focus-frame .tr{top:0;right:0;border-top-width:1.5px;border-right-width:1.5px;border-top-right-radius:6px;}
   .focus-frame .bl{bottom:0;left:0;border-bottom-width:1.5px;border-left-width:1.5px;border-bottom-left-radius:6px;}
   .focus-frame .br{bottom:0;right:0;border-bottom-width:1.5px;border-right-width:1.5px;border-bottom-right-radius:6px;}
-  /* ===== 下部UI ===== */
-  .bottom-area{
-    position:absolute;left:0;right:0;bottom:0;
-    padding-bottom:calc(env(safe-area-inset-bottom) + 14px);
-    z-index:20;
-    display:flex;flex-direction:column;align-items:center;gap:16px;
-  }
-  .mode-row{
-    display:flex;gap:22px;
-    padding:8px 20px;border-radius:22px;
-  }
-  .mode-btn{
-    background:none;border:none;color:rgba(255,255,255,.65);
-    font-size:11px;letter-spacing:.08em;font-weight:600;
-    padding:4px 2px;position:relative;
-  }
+
+  /* ---- 下部UI ---- */
+  .bottom-area{position:absolute;left:0;right:0;bottom:0;padding-bottom:calc(env(safe-area-inset-bottom) + 14px);
+    z-index:20;display:flex;flex-direction:column;align-items:center;gap:16px;}
+  .mode-row{display:flex;gap:22px;padding:8px 20px;border-radius:22px;}
+  .mode-btn{background:none;border:none;color:rgba(255,255,255,.65);font-size:11px;letter-spacing:.08em;
+    font-weight:600;padding:4px 2px;position:relative;}
   .mode-btn.active{color:#fff;}
-  .mode-btn.active::after{
-    content:"";position:absolute;left:50%;bottom:-6px;
-    transform:translateX(-50%);
-    width:5px;height:5px;border-radius:50%;
-    background:var(--pale-pink);
-  }
-  .controls-row{
-    width:100%;
-    display:flex;align-items:center;justify-content:space-between;
-    padding:0 34px;
-  }
-  .side-btn{
-    width:52px;height:52px;border-radius:16px;
-    display:flex;align-items:center;justify-content:center;
-    font-size:20px;
-  }
-  .thumb-btn{
-    background-size:cover;background-position:center;
-    border:2px solid rgba(255,255,255,.7);
-  }
-  .shutter{
-    width:76px;height:76px;border-radius:50%;
-    background:rgba(255,255,255,.18);
-    border:3.5px solid rgba(255,255,255,.9);
-    display:flex;align-items:center;justify-content:center;
-    backdrop-filter:blur(6px);
-  }
-  .shutter-inner{
-    width:60px;height:60px;border-radius:50%;
-    background:radial-gradient(circle at 35% 30%, #fff, var(--pale-pink) 70%, var(--rose) 100%);
-    transition:transform .12s ease;
-  }
+  .mode-btn.active::after{content:"";position:absolute;left:50%;bottom:-6px;transform:translateX(-50%);
+    width:5px;height:5px;border-radius:50%;background:var(--pale-pink);}
+  .controls-row{width:100%;display:flex;align-items:center;justify-content:space-between;padding:0 34px;}
+  .side-btn{width:52px;height:52px;border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:20px;}
+  .thumb-btn{background-size:cover;background-position:center;border:2px solid rgba(255,255,255,.7);}
+  .shutter{width:76px;height:76px;border-radius:50%;background:rgba(255,255,255,.18);
+    border:3.5px solid rgba(255,255,255,.9);display:flex;align-items:center;justify-content:center;backdrop-filter:blur(6px);}
+  .shutter-inner{width:60px;height:60px;border-radius:50%;
+    background:radial-gradient(circle at 35% 30%, #fff, var(--pale-pink) 70%, var(--rose) 100%);transition:transform .12s ease;}
   .shutter:active .shutter-inner{transform:scale(.85);}
-  /* ===== トースト ===== */
-  #toast{
-    position:absolute;left:50%;bottom:190px;
-    transform:translateX(-50%) translateY(10px);
-    background:rgba(30,15,18,.75);color:#fff;
-    padding:9px 18px;border-radius:20px;font-size:12.5px;
-    opacity:0;transition:opacity .25s ease, transform .25s ease;
-    pointer-events:none;z-index:40;white-space:nowrap;
-  }
+
+  #toast{position:absolute;left:50%;bottom:190px;transform:translateX(-50%) translateY(10px);
+    background:rgba(30,15,18,.75);color:#fff;padding:9px 18px;border-radius:20px;font-size:12.5px;
+    opacity:0;transition:opacity .25s ease, transform .25s ease;pointer-events:none;z-index:40;white-space:nowrap;}
   #toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
-  /* ===== 撮影フラッシュ演出 ===== */
-  #flash{
-    position:absolute;inset:0;background:#fff;opacity:0;
-    pointer-events:none;z-index:50;
-  }
-  /* ===== 起動オーバーレイ ===== */
-  #startOverlay{
-    position:absolute;inset:0;z-index:60;
-    background:linear-gradient(160deg,var(--champagne),var(--pale-pink));
-    display:flex;flex-direction:column;align-items:center;justify-content:center;
-    gap:18px;text-align:center;padding:30px;
-  }
-  #startOverlay h1{
-    color:var(--rose-text);font-size:22px;margin:0;font-weight:700;letter-spacing:.03em;
-  }
+  #flash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none;z-index:50;}
+
+  #startOverlay{position:absolute;inset:0;z-index:60;background:linear-gradient(160deg,var(--champagne),var(--pale-pink));
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;text-align:center;padding:30px;}
+  #startOverlay h1{color:var(--rose-text);font-size:22px;margin:0;font-weight:700;letter-spacing:.03em;}
   #startOverlay p{color:var(--rose-deep);font-size:13px;line-height:1.7;margin:0;max-width:280px;}
-  #startBtn{
-    padding:13px 34px;border-radius:30px;border:none;
-    background:var(--rose-deep);color:#fff;font-size:14px;font-weight:600;
-    letter-spacing:.04em;
-  }
+  #startBtn{padding:13px 34px;border-radius:30px;border:none;background:var(--rose-deep);color:#fff;
+    font-size:14px;font-weight:600;letter-spacing:.04em;}
   #startOverlay.hidden{display:none;}
+
+  /* デバッグ用（除外ゾーン可視化）*/
+  #debugZones{position:absolute;inset:0;pointer-events:none;z-index:3;display:none;}
+  #debugZones.on{display:block;}
+  #debugZones div{position:absolute;border:1px dashed rgba(255,0,80,0.5);background:rgba(255,0,80,0.05);}
 </style>
 </head>
 <body>
 <div id="app">
   <video id="camera" autoplay playsinline muted></video>
-  <canvas id="ribbonCanvas"></canvas>
+
+  <div id="ribbonLayer"></div>
+  <canvas id="particlesCanvas"></canvas>
+  <div id="debugZones"></div>
 
   <div class="focus-frame">
     <span class="tl"></span><span class="tr"></span><span class="bl"></span><span class="br"></span>
@@ -209,47 +130,266 @@
 <script>
 (() => {
   const video = document.getElementById('camera');
-  const ribbonCanvas = document.getElementById('ribbonCanvas');
-  const rctx = ribbonCanvas.getContext('2d');
+  const ribbonLayer = document.getElementById('ribbonLayer');
+  const particlesCanvas = document.getElementById('particlesCanvas');
+  const pctx = particlesCanvas.getContext('2d');
   const captureCanvas = document.getElementById('captureCanvas');
   const cctx = captureCanvas.getContext('2d');
   const toastEl = document.getElementById('toast');
   const flashEl = document.getElementById('flash');
   const thumbBtn = document.getElementById('thumbBtn');
   const startOverlay = document.getElementById('startOverlay');
+  const debugZonesEl = document.getElementById('debugZones');
 
   let facingMode = 'environment';
   let currentStream = null;
-  let effectLevel = 2; // 0=off, 1=soft, 2=normal
-  const effectLabels = ['✦off', '✦soft', '✦'];
+  let effectLevel = 2; // 0=off 1=控えめ 2=標準
+  const GRAD_ID = 'ribbonGrad';
+  const SHADOW_ID = 'ribbonShadow';
 
-  // ---------- Toast ----------
-  let toastTimer;
-  function toast(msg){
-    clearTimeout(toastTimer);
-    toastEl.textContent = msg;
-    toastEl.classList.add('show');
-    toastTimer = setTimeout(()=>toastEl.classList.remove('show'), 1600);
+  // ===================================================================
+  // 1) リボン形状：SVGパス（d属性）として定義。DOM描画にも撮影合成(Canvas
+  //    のPath2D)にも「同じパス文字列」を使うことで、見た目が完全に一致します。
+  //    - LOOP: 上部の丸いループ（1本の連続パスが自分の始点近くへ戻る＝輪）
+  //    - TAIL_A / TAIL_B: 中央でやわらかく交差してから左右に流れる2本の帯
+  //    すべて「塗りつぶし面」ではなく「太いストローク（線）」として描画する
+  //    ことで、雫型の重なり＝花びら/蝶に見える問題を回避しています。
+  // ===================================================================
+  const PATH = {
+    loop: "M -4,-8 C -30,-22 -36,-55 -14,-66 C 8,-76 34,-58 30,-32 C 28,-16 14,-4 -4,-8",
+    tailA: "M 5,-9 C -8,6 -24,20 -22,52",   // 右上→左下へ流れる帯
+    tailB: "M -5,-9 C 8,6 24,20 22,52"      // 左上→右下へ流れる帯（tailAと中央で交差）
+  };
+  const STROKE_WIDTH = 12.5;
+  const VB = { minX:-50, minY:-85, w:100, h:150 }; // viewBox（px=1viewBox単位）
+
+  // ===== 共通SVG定義（グラデーション・柔らかい影）を1つだけ生成 =====
+  const defsSvg = document.createElementNS('http://www.w3.org/2000/svg','svg');
+  defsSvg.setAttribute('width','0');
+  defsSvg.setAttribute('height','0');
+  defsSvg.style.position = 'absolute';
+  defsSvg.innerHTML = `
+    <defs>
+      <linearGradient id="${GRAD_ID}" x1="0" y1="0" x2="0.3" y2="1">
+        <stop offset="0%" stop-color="#FFF8F5"/>
+        <stop offset="45%" stop-color="#F0B4C2"/>
+        <stop offset="100%" stop-color="#C97186"/>
+      </linearGradient>
+      <filter id="${SHADOW_ID}" x="-60%" y="-60%" width="220%" height="220%">
+        <feDropShadow dx="0" dy="1.5" stdDeviation="2.2" flood-color="#C97186" flood-opacity="0.35"/>
+      </filter>
+    </defs>`;
+  ribbonLayer.appendChild(defsSvg);
+
+  function makeRibbonSvg(){
+    const NS = 'http://www.w3.org/2000/svg';
+    const svg = document.createElementNS(NS,'svg');
+    svg.setAttribute('viewBox', `${VB.minX} ${VB.minY} ${VB.w} ${VB.h}`);
+    svg.setAttribute('width', VB.w);
+    svg.setAttribute('height', VB.h);
+    svg.classList.add('ribbon-svg');
+    const g = document.createElementNS(NS,'g');
+    g.setAttribute('filter', `url(#${SHADOW_ID})`);
+    [PATH.loop, PATH.tailA, PATH.tailB].forEach(d=>{
+      const p = document.createElementNS(NS,'path');
+      p.setAttribute('d', d);
+      p.setAttribute('fill', 'none');
+      p.setAttribute('stroke', `url(#${GRAD_ID})`);
+      p.setAttribute('stroke-width', STROKE_WIDTH);
+      p.setAttribute('stroke-linecap', 'round');
+      p.setAttribute('stroke-linejoin', 'round');
+      g.appendChild(p);
+    });
+    svg.appendChild(g);
+    ribbonLayer.appendChild(svg);
+    return svg;
   }
 
-  // ---------- Camera ----------
+  // ===================================================================
+  // 2) 配置ロジック：中央の被写体エリア／上部3:4ボタン／下部操作エリアを
+  //    「除外ゾーン」として定義し、その外側（画面端）のみにリボンを配置する
+  // ===================================================================
+  function getExclusionRects(){
+    const w = innerWidth, h = innerHeight;
+    return [
+      // 被写体エリア（フォーカス枠まわり）
+      { x0:w*0.08, y0:h*0.24, x1:w*0.92, y1:h*0.78 },
+      // 上部 3:4 ピル
+      { x0:w*0.32, y0:0,      x1:w*0.68, y1:h*0.12 },
+      // 下部 操作エリア全体（モード切替／シャッター／サムネ／演出ボタン）
+      { x0:0,       y0:h*0.80, x1:w,      y1:h }
+    ];
+  }
+  const MARGIN = 55; // リボン自体の半径ぶんの余白
+  function isInsideAnyRect(x,y,rects,margin){
+    return rects.some(r => x > r.x0-margin && x < r.x1+margin && y > r.y0-margin && y < r.y1+margin);
+  }
+  function pickAnchor(){
+    const w = innerWidth, h = innerHeight;
+    const rects = getExclusionRects();
+    for(let i=0;i<40;i++){
+      const x = Math.random()*w;
+      const y = Math.random()*h*0.9 + h*0.02;
+      if(!isInsideAnyRect(x,y,rects,MARGIN)) return {x,y};
+    }
+    // フォールバック：左端 or 右端の安全な帯
+    const side = Math.random()<0.5 ? 0.06 : 0.94;
+    return { x: w*side, y: h*(0.15+Math.random()*0.1) };
+  }
+
+  // ===================================================================
+  // 3) リボンのライフサイクルと「風になびく」動き
+  //    Enter（現れる）→ Settle（アンカー付近をゆっくり漂う）→
+  //    Disperse（淡く消える）を、translate / rotate / scale / opacity の
+  //    組み合わせで表現。単純な上下移動ではなく、複数の正弦波を重ねて
+  //    薄い布のような揺らぎを作る。
+  // ===================================================================
+  const RIBBON_COUNT = 4;
+  let ribbons = [];
+
+  function initRibbon(){
+    const anchor = pickAnchor();
+    return {
+      el: makeRibbonSvg(),
+      anchorX: anchor.x, anchorY: anchor.y,
+      spawnDX: (anchor.x < innerWidth/2 ? -1 : 1) * 46,
+      spawnDY: (Math.random()-0.5) * 30,
+      baseScale: 0.62 + Math.random()*0.34,
+      baseRot: (Math.random()-0.5) * 24,
+      swayAmpX: 12 + Math.random()*10,
+      swayAmpY: 9 + Math.random()*8,
+      swayFreqX: 0.10 + Math.random()*0.06,
+      swayFreqY: 0.08 + Math.random()*0.05,
+      swayPhaseX: Math.random()*Math.PI*2,
+      swayPhaseY: Math.random()*Math.PI*2,
+      rotAmp: 5 + Math.random()*5,
+      rotFreq: 0.12 + Math.random()*0.06,
+      rotPhase: Math.random()*Math.PI*2,
+      targetOpacity: 0.22 + Math.random()*0.16, // 0.22〜0.38（要件0.18〜0.42内）
+      phase: 'enter',
+      age: 0,
+      settleDuration: 16 + Math.random()*10,
+      cur: { x:anchor.x, y:anchor.y, rot:0, scale:0.6, opacity:0 }
+    };
+  }
+
+  for(let i=0;i<RIBBON_COUNT;i++) ribbons.push(initRibbon());
+
+  function respawn(r){
+    const anchor = pickAnchor();
+    r.anchorX = anchor.x; r.anchorY = anchor.y;
+    r.spawnDX = (anchor.x < innerWidth/2 ? -1 : 1) * 46;
+    r.spawnDY = (Math.random()-0.5) * 30;
+    r.baseRot = (Math.random()-0.5) * 24;
+    r.targetOpacity = 0.22 + Math.random()*0.16;
+    r.phase = 'enter';
+    r.age = 0;
+    r.settleDuration = 16 + Math.random()*10;
+  }
+
+  function easeOutCubic(t){ return 1 - Math.pow(1-t,3); }
+  function easeInCubic(t){ return t*t*t; }
+
+  function updateRibbon(r, dt, time){
+    r.age += dt;
+    const swayX = Math.sin(time*r.swayFreqX + r.swayPhaseX) * r.swayAmpX;
+    const swayY = Math.cos(time*r.swayFreqY + r.swayPhaseY) * r.swayAmpY
+                + Math.sin(time*r.swayFreqX*0.55 + r.swayPhaseY) * r.swayAmpY*0.4;
+    const flutterRot = Math.sin(time*r.rotFreq + r.rotPhase) * r.rotAmp;
+    const breathe = 1 + Math.sin(time*r.rotFreq*0.7 + r.swayPhaseX) * 0.045;
+
+    if(r.phase === 'enter'){
+      const t = Math.min(1, r.age/2.2);
+      const e = easeOutCubic(t);
+      r.cur.x = r.anchorX + r.spawnDX*(1-e) + swayX*e;
+      r.cur.y = r.anchorY + r.spawnDY*(1-e) + swayY*e;
+      r.cur.rot = r.baseRot + flutterRot*e;
+      r.cur.scale = r.baseScale * (0.85 + 0.15*e) * breathe;
+      r.cur.opacity = r.targetOpacity * e;
+      if(t >= 1){ r.phase = 'settle'; r.age = 0; }
+    }
+    else if(r.phase === 'settle'){
+      r.cur.x = r.anchorX + swayX;
+      r.cur.y = r.anchorY + swayY;
+      r.cur.rot = r.baseRot + flutterRot;
+      r.cur.scale = r.baseScale * breathe;
+      r.cur.opacity = r.targetOpacity;
+      if(r.age > r.settleDuration){ r.phase = 'disperse'; r.age = 0; }
+    }
+    else if(r.phase === 'disperse'){
+      const t = Math.min(1, r.age/2.6);
+      const e = easeInCubic(t);
+      r.cur.x = r.anchorX + swayX*(1-e*0.4);
+      r.cur.y = r.anchorY + swayY*(1-e*0.4) - e*26;
+      r.cur.rot = r.baseRot + flutterRot;
+      r.cur.scale = r.baseScale * breathe * (1 + e*0.1);
+      r.cur.opacity = r.targetOpacity * (1-e);
+      if(Math.random() < dt*3){
+        spawnParticle(r.cur.x + (Math.random()-0.5)*20, r.cur.y + (Math.random()-0.5)*30);
+      }
+      if(t >= 1){ respawn(r); }
+    }
+
+    const finalOpacity = effectLevel === 0 ? 0 : r.cur.opacity * (effectLevel === 1 ? 0.6 : 1);
+    r.el.style.transform =
+      `translate3d(${(r.cur.x - VB.w/2).toFixed(1)}px, ${(r.cur.y - VB.h/2).toFixed(1)}px, 0) rotate(${r.cur.rot.toFixed(1)}deg) scale(${r.cur.scale.toFixed(3)})`;
+    r.el.style.opacity = finalOpacity.toFixed(3);
+  }
+
+  // ---- 光の粒子（disperse時のみ、控えめに） ----
+  const particles = [];
+  function spawnParticle(x,y){
+    particles.push({ x,y, vx:(Math.random()-0.5)*8, vy:-(14+Math.random()*16),
+      life:0, maxLife:1.2+Math.random()*0.8, size:1.2+Math.random()*1.8 });
+  }
+  function resizeCanvases(){
+    const dpr = Math.min(devicePixelRatio||1, 2);
+    particlesCanvas.width = innerWidth*dpr; particlesCanvas.height = innerHeight*dpr;
+    pctx.setTransform(dpr,0,0,dpr,0,0);
+  }
+  window.addEventListener('resize', resizeCanvases);
+  resizeCanvases();
+
+  let lastT = performance.now();
+  let clock = 0;
+  function tick(now){
+    const dt = Math.min((now-lastT)/1000, 0.05);
+    lastT = now; clock += dt;
+
+    pctx.clearRect(0,0,innerWidth,innerHeight);
+    for(const r of ribbons) updateRibbon(r, dt, clock);
+    if(effectLevel > 0){
+      for(let i=particles.length-1;i>=0;i--){
+        const p = particles[i];
+        p.life += dt; p.x += p.vx*dt; p.y += p.vy*dt;
+        if(p.life >= p.maxLife){ particles.splice(i,1); continue; }
+        const a = (1-p.life/p.maxLife) * 0.55;
+        const g = pctx.createRadialGradient(p.x,p.y,0,p.x,p.y,p.size*3);
+        g.addColorStop(0, `rgba(255,247,243,${a})`);
+        g.addColorStop(1, `rgba(255,247,243,0)`);
+        pctx.fillStyle = g;
+        pctx.beginPath(); pctx.arc(p.x,p.y,p.size*3,0,Math.PI*2); pctx.fill();
+      }
+    }
+    requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+
+  // ===================================================================
+  // カメラ / UI 制御
+  // ===================================================================
   async function startCamera(){
     try{
       if(currentStream){ currentStream.getTracks().forEach(t=>t.stop()); }
       const stream = await navigator.mediaDevices.getUserMedia({
-        video:{ facingMode, width:{ideal:1080}, height:{ideal:1440} },
-        audio:false
+        video:{ facingMode, width:{ideal:1080}, height:{ideal:1440} }, audio:false
       });
       currentStream = stream;
       video.srcObject = stream;
       video.classList.toggle('mirrored', facingMode === 'user');
       startOverlay.classList.add('hidden');
-    }catch(err){
-      toast('カメラを起動できませんでした');
-      console.error(err);
-    }
+    }catch(err){ toast('カメラを起動できませんでした'); console.error(err); }
   }
-
   document.getElementById('startBtn').addEventListener('click', startCamera);
   document.getElementById('flipBtn').addEventListener('click', ()=>{
     facingMode = facingMode === 'environment' ? 'user' : 'environment';
@@ -257,305 +397,96 @@
   });
   document.getElementById('menuBtn').addEventListener('click', ()=>toast('メニュー（MVP未実装）'));
   document.getElementById('ratioBtn').addEventListener('click', ()=>toast('比率切替（MVP未実装）'));
-
   document.querySelectorAll('.mode-btn').forEach(btn=>{
     btn.addEventListener('click', ()=>{
-      if(btn.dataset.mode !== 'photo'){
-        toast(btn.dataset.mode.toUpperCase() + ' は今回のプロトタイプ未実装です');
-        return;
-      }
+      if(btn.dataset.mode !== 'photo'){ toast(btn.dataset.mode.toUpperCase() + ' は今回のプロトタイプ未実装です'); return; }
       document.querySelectorAll('.mode-btn').forEach(b=>b.classList.remove('active'));
       btn.classList.add('active');
     });
   });
-
   document.getElementById('effectBtn').addEventListener('click', ()=>{
     effectLevel = (effectLevel + 1) % 3;
     toast('リボン演出: ' + ['オフ','控えめ','標準'][effectLevel]);
   });
 
-  // ---------- Canvas sizing ----------
-  function resizeCanvas(){
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
-    ribbonCanvas.width = innerWidth * dpr;
-    ribbonCanvas.height = innerHeight * dpr;
-    rctx.setTransform(dpr,0,0,dpr,0,0);
-  }
-  window.addEventListener('resize', resizeCanvas);
-  resizeCanvas();
-
-  // ---------- Ribbon shape (抽象化された一般的なリボンモチーフ) ----------
-  function pathRibbon(ctx){
-    ctx.beginPath();
-    // 上部の結び目（左右の輪）
-    ctx.moveTo(0,-10);
-    ctx.bezierCurveTo(-24,-46,-56,-26,-30,-1);
-    ctx.bezierCurveTo(-16,13,-2,4,0,-10);
-    ctx.closePath();
-    ctx.moveTo(0,-10);
-    ctx.bezierCurveTo(24,-46,56,-26,30,-1);
-    ctx.bezierCurveTo(16,13,2,4,0,-10);
-    ctx.closePath();
-    // 左テール
-    ctx.moveTo(-6,-3);
-    ctx.bezierCurveTo(-22,20,-36,46,-21,76);
-    ctx.bezierCurveTo(-15,58,-9,38,-2,14);
-    ctx.closePath();
-    // 右テール
-    ctx.moveTo(6,-3);
-    ctx.bezierCurveTo(22,20,36,46,21,76);
-    ctx.bezierCurveTo(15,58,9,38,2,14);
-    ctx.closePath();
+  let toastTimer;
+  function toast(msg){
+    clearTimeout(toastTimer);
+    toastEl.textContent = msg; toastEl.classList.add('show');
+    toastTimer = setTimeout(()=>toastEl.classList.remove('show'), 1600);
   }
 
-  function drawRibbon(ctx, r){
-    ctx.save();
-    ctx.translate(r.x, r.y);
-    ctx.rotate(r.rotation);
-    ctx.scale(r.scale, r.scale);
-    ctx.globalAlpha = Math.max(0, r.opacity);
-
-    const grad = ctx.createLinearGradient(-40,-40,30,80);
-    grad.addColorStop(0, 'rgba(255,244,240,0.95)');
-    grad.addColorStop(0.45, 'rgba(232,160,174,0.9)');
-    grad.addColorStop(1, 'rgba(201,113,134,0.85)');
-
-    ctx.shadowColor = 'rgba(232,160,174,0.55)';
-    ctx.shadowBlur = 22;
-    ctx.fillStyle = grad;
-    pathRibbon(ctx);
-    ctx.fill();
-
-    ctx.shadowBlur = 0;
-    ctx.globalAlpha *= 0.35;
-    ctx.strokeStyle = 'rgba(255,255,255,0.9)';
-    ctx.lineWidth = 1.4;
-    pathRibbon(ctx);
-    ctx.stroke();
-    ctx.restore();
-  }
-
-  // ---------- Particle (disperse phase) ----------
-  function makeParticle(x,y){
-    return {
-      x, y,
-      vx:(Math.random()-0.5)*8,
-      vy:-(20 + Math.random()*25),
-      life:0, maxLife: 1.4 + Math.random()*1.2,
-      size: 1.5 + Math.random()*2.5
-    };
-  }
-  const particles = [];
-
-  function drawParticle(ctx,p){
-    const t = p.life / p.maxLife;
-    const alpha = (1-t) * 0.8;
-    if(alpha<=0) return;
-    const g = ctx.createRadialGradient(p.x,p.y,0,p.x,p.y,p.size*3);
-    g.addColorStop(0, `rgba(255,246,242,${alpha})`);
-    g.addColorStop(1, `rgba(255,246,242,0)`);
-    ctx.fillStyle = g;
-    ctx.beginPath();
-    ctx.arc(p.x,p.y,p.size*3,0,Math.PI*2);
-    ctx.fill();
-  }
-
-  // ---------- Ribbon lifecycle ----------
-  // layer: 0=背景(遅い/小さい/薄い) 1=中景 2=前景(速い/大きい/濃い)
-  function spawnRibbon(){
-    const w = innerWidth, h = innerHeight;
-    const layer = Math.random() < 0.4 ? 0 : (Math.random() < 0.7 ? 1 : 2);
-    const edge = Math.floor(Math.random()*4); // 0上 1右 2下 3左
-    let x,y;
-    if(edge===0){ x = Math.random()*w; y = -60; }
-    else if(edge===1){ x = w+60; y = Math.random()*h; }
-    else if(edge===2){ x = Math.random()*w; y = h+60; }
-    else { x = -60; y = Math.random()*h; }
-
-    const speedBase = [10,18,28][layer];
-    const targetX = w*0.2 + Math.random()*w*0.6;
-    const targetY = h*0.2 + Math.random()*h*0.6;
-    const ang = Math.atan2(targetY-y, targetX-x);
-
-    return {
-      x, y, layer,
-      vx: Math.cos(ang)*speedBase,
-      vy: Math.sin(ang)*speedBase,
-      scale: [0.55,0.8,1.05][layer] * (0.85 + Math.random()*0.3),
-      rotation: Math.random()*Math.PI*2,
-      rotSpeed: (Math.random()-0.5) * 0.25,
-      opacity: 0,
-      targetOpacity: [0.35,0.55,0.75][layer],
-      phase: 'enter',
-      age: 0,
-      driftDuration: 6 + Math.random()*5,
-      lastParticle: 0
-    };
-  }
-
-  const SAFE_ZONE = () => ({
-    cx: innerWidth/2, cy: innerHeight*0.5,
-    rx: innerWidth*0.32, ry: innerHeight*0.28
-  });
-
-  function inSafeZone(x,y){
-    const z = SAFE_ZONE();
-    const dx=(x-z.cx)/z.rx, dy=(y-z.cy)/z.ry;
-    return dx*dx+dy*dy < 1;
-  }
-
-  let ribbons = [];
-  for(let i=0;i<7;i++) ribbons.push(spawnRibbon());
-
-  let lastT = performance.now();
-  function step(now){
-    const dt = Math.min((now-lastT)/1000, 0.05); // 実時間ベース（デバイス差を吸収）
-    lastT = now;
-
-    const w = innerWidth, h = innerHeight;
-    rctx.clearRect(0,0,w,h);
-
-    if(effectLevel > 0){
-      const globalAlpha = effectLevel === 1 ? 0.55 : 1;
-
-      // レイヤー順（背景→前景）に描画してパララックス感を出す
-      for(let layer=0; layer<3; layer++){
-        for(const r of ribbons){
-          if(r.layer !== layer) continue;
-          updateRibbon(r, dt, w, h);
-          if(r.opacity > 0.01){
-            const before = r.opacity;
-            r.opacity *= globalAlpha;
-            drawRibbon(rctx, r);
-            r.opacity = before;
-          }
-        }
-      }
-
-      // パーティクル
-      for(let i=particles.length-1;i>=0;i--){
-        const p = particles[i];
-        p.life += dt;
-        p.x += p.vx*dt; p.y += p.vy*dt;
-        if(p.life >= p.maxLife){ particles.splice(i,1); continue; }
-        drawParticle(rctx,p);
-      }
-    }
-
-    ribbons = ribbons.filter(r => !(r.phase==='disperse' && r.opacity<=0.01));
-    while(ribbons.length < 7) ribbons.push(spawnRibbon());
-
-    requestAnimationFrame(step);
-  }
-
-  function updateRibbon(r, dt, w, h){
-    r.age += dt;
-    r.rotation += r.rotSpeed*dt;
-
-    if(r.phase === 'enter'){
-      r.opacity += (r.targetOpacity - r.opacity) * Math.min(1, dt*1.5);
-      r.x += r.vx*dt; r.y += r.vy*dt;
-      if(r.age > 1.8){ r.phase='drift'; r.age=0; }
-    }
-    else if(r.phase === 'drift'){
-      // 中心の被写体エリアをやんわり避ける
-      if(inSafeZone(r.x,r.y)){
-        const z = SAFE_ZONE();
-        const dx = r.x - z.cx, dy = r.y - z.cy;
-        const len = Math.hypot(dx,dy) || 1;
-        r.vx += (dx/len) * 14 * dt;
-        r.vy += (dy/len) * 14 * dt;
-      }
-      // ゆるやかな漂い（ノイズ的揺らぎ）
-      r.vx += (Math.random()-0.5) * 6 * dt;
-      r.vy += (Math.random()-0.5) * 6 * dt - 2*dt; // ほんの少し上昇傾向
-      const speedCap = [14,20,30][r.layer];
-      const sp = Math.hypot(r.vx,r.vy) || 1;
-      if(sp > speedCap){ r.vx = r.vx/sp*speedCap; r.vy = r.vy/sp*speedCap; }
-      r.x += r.vx*dt; r.y += r.vy*dt;
-
-      // 画面外に出過ぎたら中心方向へ軽く戻す
-      const margin = 80;
-      if(r.x<-margin||r.x>w+margin||r.y<-margin||r.y>h+margin){
-        r.vx += (w/2-r.x)*0.05*dt;
-        r.vy += (h/2-r.y)*0.05*dt;
-      }
-
-      if(r.age > r.driftDuration){ r.phase='disperse'; r.age=0; }
-    }
-    else if(r.phase === 'disperse'){
-      r.vy -= 18*dt; // 上昇加速
-      r.vx *= (1 - 0.3*dt);
-      r.x += r.vx*dt; r.y += r.vy*dt;
-      r.opacity -= dt * 0.45;
-      r.scale += dt*0.06;
-
-      r.lastParticle += dt;
-      if(r.lastParticle > 0.09){
-        r.lastParticle = 0;
-        particles.push(makeParticle(r.x + (Math.random()-0.5)*20, r.y + (Math.random()-0.5)*30));
-      }
-    }
-  }
-  requestAnimationFrame(step);
-
-  // ---------- Capture (video + ribbon overlay を合成) ----------
+  // ===================================================================
+  // 撮影：カメラ映像 + リボン（同じパスをPath2Dで再描画）+ 粒子 を合成
+  // ===================================================================
   function drawVideoCover(ctx, video, cw, ch){
     const vw = video.videoWidth, vh = video.videoHeight;
     if(!vw || !vh) return;
     const vRatio = vw/vh, cRatio = cw/ch;
     let sx,sy,sw,sh;
-    if(vRatio > cRatio){
-      sh = vh; sw = vh*cRatio; sy = 0; sx = (vw-sw)/2;
-    } else {
-      sw = vw; sh = vw/cRatio; sx = 0; sy = (vh-sh)/2;
-    }
+    if(vRatio > cRatio){ sh=vh; sw=vh*cRatio; sy=0; sx=(vw-sw)/2; }
+    else { sw=vw; sh=vw/cRatio; sx=0; sy=(vh-sh)/2; }
     ctx.save();
-    if(facingMode === 'user'){
-      ctx.translate(cw,0); ctx.scale(-1,1);
-    }
+    if(facingMode === 'user'){ ctx.translate(cw,0); ctx.scale(-1,1); }
     ctx.drawImage(video, sx,sy,sw,sh, 0,0,cw,ch);
     ctx.restore();
   }
 
+  function drawRibbonOnCanvas(ctx, r){
+    if(effectLevel === 0) return;
+    const alpha = r.cur.opacity * (effectLevel === 1 ? 0.6 : 1);
+    if(alpha <= 0.01) return;
+    ctx.save();
+    ctx.translate(r.cur.x, r.cur.y);
+    ctx.rotate(r.cur.rot * Math.PI/180);
+    ctx.scale(r.cur.scale, r.cur.scale);
+    ctx.globalAlpha = alpha;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.lineWidth = STROKE_WIDTH;
+    ctx.strokeStyle = gradientForCanvas(ctx);
+    ctx.shadowColor = 'rgba(201,113,134,0.35)';
+    ctx.shadowBlur = 6;
+    [PATH.loop, PATH.tailA, PATH.tailB].forEach(d=>{
+      ctx.stroke(new Path2D(d));
+    });
+    ctx.restore();
+  }
+  function gradientForCanvas(ctx){
+    const g = ctx.createLinearGradient(0, VB.minY, 0, VB.minY+VB.h);
+    g.addColorStop(0, '#FFF8F5');
+    g.addColorStop(0.45, '#F0B4C2');
+    g.addColorStop(1, '#C97186');
+    return g;
+  }
+
   async function capturePhoto(){
     const cw = innerWidth, ch = innerHeight;
-    const dpr = Math.min(window.devicePixelRatio||1, 2);
-    captureCanvas.width = cw*dpr;
-    captureCanvas.height = ch*dpr;
+    const dpr = Math.min(devicePixelRatio||1, 2);
+    captureCanvas.width = cw*dpr; captureCanvas.height = ch*dpr;
     cctx.setTransform(dpr,0,0,dpr,0,0);
 
     drawVideoCover(cctx, video, cw, ch);
-    cctx.drawImage(ribbonCanvas, 0,0,cw,ch);
+    for(const r of ribbons) drawRibbonOnCanvas(cctx, r);
+    cctx.drawImage(particlesCanvas, 0,0,cw,ch);
 
-    flashEl.style.transition = 'none';
-    flashEl.style.opacity = '0.85';
-    requestAnimationFrame(()=>{
-      flashEl.style.transition = 'opacity .35s ease';
-      flashEl.style.opacity = '0';
-    });
+    flashEl.style.transition = 'none'; flashEl.style.opacity = '0.85';
+    requestAnimationFrame(()=>{ flashEl.style.transition = 'opacity .35s ease'; flashEl.style.opacity = '0'; });
 
     captureCanvas.toBlob(async (blob)=>{
       if(!blob) return;
       const url = URL.createObjectURL(blob);
       thumbBtn.style.backgroundImage = `url(${url})`;
-
       const file = new File([blob], `pink-ribbon-${Date.now()}.png`, {type:'image/png'});
       if(navigator.canShare && navigator.canShare({files:[file]})){
-        try{
-          await navigator.share({ files:[file], title:'Pink Ribbon Camera' });
-          toast('保存・共有しました');
-          return;
-        }catch(e){ /* ユーザーがキャンセルした場合など */ }
+        try{ await navigator.share({ files:[file], title:'Pink Ribbon Camera' }); toast('保存・共有しました'); return; }
+        catch(e){ /* キャンセル等 */ }
       }
-      // フォールバック（PC等 Web Share 非対応環境）
-      const a = document.createElement('a');
-      a.href = url; a.download = file.name;
+      const a = document.createElement('a'); a.href = url; a.download = file.name;
       document.body.appendChild(a); a.click(); a.remove();
       toast('画像を保存しました');
     }, 'image/png', 0.95);
   }
-
   document.getElementById('shutterBtn').addEventListener('click', capturePhoto);
   document.getElementById('thumbBtn').addEventListener('click', ()=>toast('サムネイル（プレビュー画面はMVP未実装）'));
 
